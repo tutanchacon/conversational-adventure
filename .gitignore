@@ -1,0 +1,96 @@
+# Adventure Game con Memoria Perfecta - .gitignore
+
+# Entornos virtuales Python
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Archivos Python compilados
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribución / empaquetado
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Bases de datos del juego
+*.db
+*.sqlite
+*.sqlite3
+
+# Archivos de configuración sensibles
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Archivos de sistema
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs y editores
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Archivos temporales del juego
+temp/
+tmp/
+*.tmp
+
+# Snapshots de mundo (solo para desarrollo)
+*_snapshot.json
+*_backup.db
+
+# Archivos de prueba generados
+test_*.db
+demo_*.db
+*_test_world.db
+
+# Documentos compilados (mantener fuentes)
+*.pdf
+*.docx
+
+# Archivos de distribución
+*.zip
+*.tar.gz
+*.rar
+
+# Except: mantener archivo de documentación final
+!Adventure_Game_MCP_Documentation_*.zip

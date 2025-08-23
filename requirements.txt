@@ -1,0 +1,27 @@
+# Dependencias del Juego de Aventura con MCP
+# Core AI y LLM
+ollama
+aiohttp
+numpy
+
+# Bases de datos y persistencia
+chromadb>=0.4.0
+sqlalchemy>=2.0.0
+alembic>=1.13.0
+
+# Vector embeddings y procesamiento
+sentence-transformers>=2.2.0
+transformers>=4.30.0
+
+# MCP (Model Context Protocol)
+mcp>=1.0.0
+
+# Utilidades y desarrollo
+pydantic>=2.0.0
+asyncio-mqtt
+fastapi>=0.100.0
+uvicorn
+
+# Testing y desarrollo
+pytest>=7.0.0
+pytest-asyncio
