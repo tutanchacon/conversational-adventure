@@ -11,11 +11,13 @@ import sqlite3
 from datetime import datetime
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass, asdict
-import chromadb
-from chromadb.config import Settings
-from sentence_transformers import SentenceTransformer
 import numpy as np
 from pathlib import Path
+
+# Lazy imports for heavy dependencies
+chromadb = None
+SentenceTransformer = None
+Settings = None
 
 
 @dataclass
@@ -56,27 +58,53 @@ class VectorSearchEngine:
         self.vector_db_path = Path(vector_db_path)
         self.vector_db_path.mkdir(exist_ok=True)
         
-        # Configurar ChromaDB
-        self.chroma_client = chromadb.PersistentClient(
-            path=str(self.vector_db_path),
-            settings=Settings(
-                anonymized_telemetry=False,
-                allow_reset=True
-            )
-        )
-        
-        # Modelo de embeddings - optimizado para español e inglés
-        self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-        
-        # Colecciones separadas por tipo
-        self.collections = {
-            'objects': self._get_or_create_collection('game_objects'),
-            'locations': self._get_or_create_collection('game_locations'),
-            'events': self._get_or_create_collection('game_events'),
-            'actions': self._get_or_create_collection('game_actions')
-        }
+        # Lazy initialization - se inicializan cuando se necesitan
+        self.chroma_client = None
+        self.embedding_model = None
+        self.collections = {}
+        self.initialized = False
         
         self.logger = logging.getLogger(__name__)
+    
+    def _ensure_initialized(self):
+        """Inicializa ChromaDB y SentenceTransformer solo cuando se necesitan"""
+        if self.initialized:
+            return
+        
+        try:
+            # Lazy imports de dependencias pesadas
+            global chromadb, SentenceTransformer, Settings
+            if chromadb is None:
+                import chromadb
+                from chromadb.config import Settings
+                from sentence_transformers import SentenceTransformer
+            
+            # Configurar ChromaDB
+            self.chroma_client = chromadb.PersistentClient(
+                path=str(self.vector_db_path),
+                settings=Settings(
+                    anonymized_telemetry=False,
+                    allow_reset=True
+                )
+            )
+            
+            # Modelo de embeddings - optimizado para español e inglés
+            self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+            
+            # Colecciones separadas por tipo
+            self.collections = {
+                'objects': self._get_or_create_collection('game_objects'),
+                'locations': self._get_or_create_collection('game_locations'),
+                'events': self._get_or_create_collection('game_events'),
+                'actions': self._get_or_create_collection('game_actions')
+            }
+            
+            self.initialized = True
+            self.logger.info("✅ Vector search engine inicializado")
+            
+        except Exception as e:
+            self.logger.error(f"❌ Error inicializando vector search: {e}")
+            raise
         
     def _get_or_create_collection(self, name: str):
         """Obtiene o crea una colección en ChromaDB"""
@@ -93,6 +121,8 @@ class VectorSearchEngine:
         Inicializa el índice vectorial desde datos existentes en SQLite
         Convierte todo el historial en embeddings vectoriales
         """
+        self._ensure_initialized()  # Inicializar ChromaDB antes de usar
+        
         self.logger.info("🔄 Inicializando índice vectorial desde datos existentes...")
         
         conn = sqlite3.connect(self.db_path)
@@ -119,10 +149,9 @@ class VectorSearchEngine:
     async def _process_existing_objects(self, conn):
         """Procesa objetos existentes y los convierte en vectores"""
         cursor = conn.execute("""
-            SELECT object_id, name, description, properties, location_id, 
+            SELECT id, name, description, properties, location_id, 
                    created_at, version
-            FROM game_objects 
-            WHERE is_current = 1
+            FROM game_objects
         """)
         
         documents = []
@@ -144,20 +173,20 @@ class VectorSearchEngine:
             
             content = " | ".join(content_parts)
             
-            # Metadata para búsqueda y filtrado
+            # Metadata para búsqueda y filtrado - filtrar valores None
             metadata = {
-                'object_id': row['object_id'],
-                'name': row['name'],
-                'location_id': row['location_id'],
-                'created_at': row['created_at'],
-                'version': row['version'],
+                'object_id': row['id'] or '',
+                'name': row['name'] or '',
+                'location_id': row['location_id'] or '',
+                'created_at': row['created_at'] or '',
+                'version': int(row['version'] or 1),
                 'type': 'object',
-                'properties': properties
+                'properties': json.dumps(properties)  # Convertir dict a JSON string
             }
             
             documents.append(content)
             metadatas.append(metadata)
-            ids.append(f"obj_{row['object_id']}_{row['version']}")
+            ids.append(f"obj_{row['id']}_{row['version']}")
         
         if documents:
             # Generar embeddings y almacenar
@@ -175,7 +204,7 @@ class VectorSearchEngine:
     async def _process_existing_locations(self, conn):
         """Procesa ubicaciones existentes"""
         cursor = conn.execute("""
-            SELECT location_id, name, description, connections
+            SELECT id, name, description, connections
             FROM locations
         """)
         
@@ -198,15 +227,15 @@ class VectorSearchEngine:
             content = " | ".join(content_parts)
             
             metadata = {
-                'location_id': row['location_id'],
-                'name': row['name'],
+                'location_id': row['id'] or '',
+                'name': row['name'] or '',
                 'type': 'location',
-                'connections': connections
+                'connections': json.dumps(connections)  # Convertir dict a JSON string
             }
             
             documents.append(content)
             metadatas.append(metadata)
-            ids.append(f"loc_{row['location_id']}")
+            ids.append(f"loc_{row['id']}")
         
         if documents:
             embeddings = self.embedding_model.encode(documents).tolist()
@@ -223,8 +252,8 @@ class VectorSearchEngine:
     async def _process_existing_events(self, conn):
         """Procesa eventos históricos"""
         cursor = conn.execute("""
-            SELECT event_id, event_type, object_id, location_id, 
-                   event_data, timestamp
+            SELECT id, event_type, target, location_id, 
+                   context, timestamp
             FROM game_events
             ORDER BY timestamp DESC
             LIMIT 10000  -- Limitamos para no sobrecargar
@@ -235,39 +264,39 @@ class VectorSearchEngine:
         ids = []
         
         for row in cursor:
-            event_data = json.loads(row['event_data'] or '{}')
+            context_data = json.loads(row['context'] or '{}')
             
             content_parts = [
                 f"Evento: {row['event_type']}",
                 f"Timestamp: {row['timestamp']}"
             ]
             
-            if row['object_id']:
-                content_parts.append(f"Objeto: {row['object_id']}")
+            if row['target']:
+                content_parts.append(f"Objeto: {row['target']}")
             
             if row['location_id']:
                 content_parts.append(f"Ubicación: {row['location_id']}")
             
             # Agregar datos específicos del evento
-            for key, value in event_data.items():
+            for key, value in context_data.items():
                 if value and str(value).strip():
                     content_parts.append(f"{key}: {value}")
             
             content = " | ".join(content_parts)
             
             metadata = {
-                'event_id': row['event_id'],
-                'event_type': row['event_type'],
-                'object_id': row['object_id'],
-                'location_id': row['location_id'],
-                'timestamp': row['timestamp'],
+                'event_id': row['id'] or '',
+                'event_type': row['event_type'] or '',
+                'object_id': row['target'] or '',
+                'location_id': row['location_id'] or '',
+                'timestamp': row['timestamp'] or '',
                 'type': 'event',
-                'event_data': event_data
+                'event_data': json.dumps(context_data)  # Convertir dict a JSON string
             }
             
             documents.append(content)
             metadatas.append(metadata)
-            ids.append(f"evt_{row['event_id']}")
+            ids.append(f"evt_{row['id']}")
         
         if documents:
             embeddings = self.embedding_model.encode(documents).tolist()
@@ -338,6 +367,8 @@ class VectorSearchEngine:
     async def _search_in_collection(self, collection_type: str, query: str, 
                                   limit: int, filters: Optional[Dict] = None) -> List[SearchResult]:
         """Realiza búsqueda vectorial en una colección específica"""
+        self._ensure_initialized()  # Asegurar que está inicializado
+        
         try:
             collection = self.collections[collection_type]
             
@@ -400,7 +431,7 @@ class VectorSearchEngine:
             cursor = conn.execute("""
                 SELECT name, description, properties
                 FROM game_objects 
-                WHERE object_id = ? AND is_current = 1
+                WHERE id = ?
             """, (object_id,))
             
             row = cursor.fetchone()
@@ -449,7 +480,7 @@ class VectorSearchEngine:
             cursor = conn.execute("""
                 SELECT DISTINCT o.name, o.description, o.properties
                 FROM game_objects o
-                JOIN game_events e ON o.object_id = e.object_id
+                JOIN game_events e ON o.id = e.target
                 WHERE e.location_id = ? OR o.location_id = ?
             """, (location_id, location_id))
             
@@ -541,7 +572,7 @@ class VectorSearchEngine:
                 'location_id': location_id,
                 'version': version,
                 'type': 'object',
-                'properties': properties,
+                'properties': json.dumps(properties),  # Convertir dict a JSON string
                 'created_at': datetime.now().isoformat()
             }
             
@@ -589,7 +620,7 @@ class VectorSearchEngine:
                 'location_id': location_id,
                 'timestamp': timestamp,
                 'type': 'event',
-                'event_data': event_data
+                'event_data': json.dumps(event_data)  # Convertir dict a JSON string
             }
             
             embedding = self.embedding_model.encode([content]).tolist()[0]

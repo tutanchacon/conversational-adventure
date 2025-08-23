@@ -26,7 +26,7 @@ class EnhancedMCPProvider(MCPContextProvider):
     """
     
     def __init__(self, memory_system, db_path: str = "adventure_game.db"):
-        super().__init__(memory_system, db_path)
+        super().__init__(memory_system)
         
         # Inicializar motor de búsqueda vectorial
         self.vector_engine = VectorSearchEngine(db_path)
@@ -64,7 +64,7 @@ class EnhancedMCPProvider(MCPContextProvider):
         
         # Obtener contexto base original
         base_context = await self.generate_world_context_for_ai(
-            current_location, player_inventory, recent_actions
+            current_location
         )
         
         if not self.vector_initialized:

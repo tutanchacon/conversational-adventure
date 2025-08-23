@@ -473,6 +473,13 @@ Responde al comando del jugador de forma inmersiva. Si el comando implica cambio
             
             properties = result.get('properties', {})
             if properties:
+                # Si properties es string JSON, convertirlo a dict
+                if isinstance(properties, str):
+                    try:
+                        properties = json.loads(properties)
+                    except:
+                        properties = {}
+                
                 prop_list = [f"{k}: {v}" for k, v in properties.items() if v]
                 if prop_list:
                     response += f"   📊 Propiedades: {', '.join(prop_list[:3])}\n"
