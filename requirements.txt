@@ -1,17 +1,19 @@
-# Dependencias del Juego de Aventura con MCP
+# Dependencias del Juego de Aventura con MCP v1.1.0
 # Core AI y LLM
 ollama
 aiohttp
-numpy
+numpy>=1.24.0
 
 # Bases de datos y persistencia
-chromadb>=0.4.0
+chromadb>=0.4.15
 sqlalchemy>=2.0.0
 alembic>=1.13.0
 
-# Vector embeddings y procesamiento
-sentence-transformers>=2.2.0
-transformers>=4.30.0
+# Vector embeddings y procesamiento de lenguaje natural
+sentence-transformers>=2.2.2
+transformers>=4.35.0
+torch>=2.0.0
+scikit-learn>=1.3.0
 
 # MCP (Model Context Protocol)
 mcp>=1.0.0

@@ -1,11 +1,14 @@
 
-# Adventure Game con Sistema de Memoria Perfecta y MCP
+# Adventure Game con Sistema de Memoria Perfecta, MCP y Vector Search v1.1.0
 import asyncio
 import json
 import aiohttp
-from typing import Dict, Any, Optional
+import logging
+from typing import Dict, Any, Optional, List
 from memory_system import PerfectMemorySystem
 from mcp_integration import MCPContextProvider
+from enhanced_mcp import EnhancedMCPProvider
+from vector_search import VectorSearchEngine
 
 class OllamaClient:
     """Cliente real para conectar con Ollama"""
@@ -57,22 +60,34 @@ class OllamaClient:
 
 class IntelligentAdventureGame:
     """
-    Juego de aventura inteligente con memoria perfecta
-    Implementa MCP para contexto completo de la IA
+    Juego de aventura inteligente con memoria perfecta y búsqueda vectorial
+    
+    Versión 1.1.0 - Nuevas características:
+    - Sistema de búsqueda semántica con ChromaDB
+    - Análisis de patrones de objetos y ubicaciones
+    - Contexto MCP enriquecido con similitud vectorial
+    - Recomendaciones inteligentes basadas en embeddings
     """
     
     def __init__(self, memory_db_path: str = "adventure_world.db", model: str = "llama3.2"):
         self.memory = PerfectMemorySystem(memory_db_path)
-        self.mcp = MCPContextProvider(self.memory)
+        
+        # Sistema MCP mejorado con búsqueda vectorial
+        self.mcp = EnhancedMCPProvider(self.memory, memory_db_path)
+        
         self.model = model
         self.ollama = OllamaClient()
         self.current_location_id = None
         self.player_id = "player"
         
-        print(f"🎮 IntelligentAdventureGame inicializado")
+        # Configurar logging
+        self.logger = logging.getLogger(__name__)
+        
+        print(f"🎮 IntelligentAdventureGame v1.1.0 inicializado")
         print(f"   📊 Modelo: {model}")
         print(f"   💾 Base de datos: {memory_db_path}")
         print(f"   🧠 Memoria perfecta: ACTIVA")
+        print(f"   🔍 Búsqueda vectorial: ACTIVANDO...")
     
     async def initialize_world(self):
         """Inicializa el mundo del juego si no existe"""
@@ -146,10 +161,13 @@ class IntelligentAdventureGame:
             print("🌍 Mundo existente cargado")
     
     async def process_command_async(self, command: str) -> str:
-        """Procesa comando del jugador usando IA con contexto perfecto"""
+        """Procesa comando del jugador usando IA con contexto perfecto y búsqueda vectorial"""
         
         if not self.current_location_id:
             await self.initialize_world()
+        
+        # Inicializar búsqueda vectorial si no está lista
+        await self.mcp.initialize_vector_search()
         
         # Registrar comando del jugador
         await self.memory._record_event(
@@ -161,15 +179,35 @@ class IntelligentAdventureGame:
             context={"command": command, "raw_input": True}
         )
         
-        # Obtener contexto completo para la IA
-        world_context = await self.mcp.generate_world_context_for_ai(
+        # Detectar comandos de búsqueda vectorial especiales
+        if await self._handle_vector_search_commands(command):
+            return await self._process_vector_search_command(command)
+        
+        # Obtener contexto enriquecido para la IA
+        player_inventory = await self._get_player_inventory()
+        recent_actions = await self._get_recent_actions(limit=3)
+        
+        world_context = await self.mcp.generate_enhanced_world_context_for_ai(
             self.current_location_id,
-            query=command
+            player_inventory,
+            recent_actions
         )
         
-        # Preparar prompt para la IA
+        # Preparar prompt mejorado para la IA
         system_prompt = f"""
-Eres el narrador de un juego de aventura con MEMORIA PERFECTA. Tienes acceso completo al estado del mundo y su historia.
+Eres el narrador de un juego de aventura con MEMORIA PERFECTA y BÚSQUEDA SEMÁNTICA AVANZADA.
+
+NUEVAS CAPACIDADES v1.1.0:
+- Puedes encontrar objetos por similitud semántica
+- Análisis de patrones de objetos y ubicaciones
+- Recomendaciones inteligentes basadas en contexto
+- Búsqueda por función y características
+
+COMANDOS ESPECIALES DISPONIBLES:
+- "buscar objetos como X" - Encuentra objetos similares
+- "buscar herramientas de Y" - Busca por función/categoría  
+- "analizar patrones aquí" - Analiza patrones de ubicación
+- "recomendar objetos" - Sugerencias inteligentes
 
 REGLAS IMPORTANTES:
 1. Usa SOLO la información del contexto del mundo proporcionado
@@ -178,11 +216,12 @@ REGLAS IMPORTANTES:
 4. Responde en español de forma inmersiva y descriptiva
 5. Si el jugador interactúa con objetos, actualiza sus estados si es apropiado
 6. Mantén consistencia absoluta con la información del mundo
+7. USA las nuevas capacidades de búsqueda para enriquecer las respuestas
 
-CONTEXTO ACTUAL DEL MUNDO:
+CONTEXTO ACTUAL DEL MUNDO (ENRIQUECIDO):
 {world_context}
 
-Responde al comando del jugador de forma inmersiva. Si el comando implica cambios en el mundo (mover objetos, cambiar ubicaciones, etc.), describe claramente lo que ocurre.
+Responde al comando del jugador de forma inmersiva. Si el comando implica cambios en el mundo, describe claramente lo que ocurre.
 """
         
         user_prompt = f"Comando del jugador: {command}"
@@ -324,18 +363,185 @@ Responde al comando del jugador de forma inmersiva. Si el comando implica cambio
         return inventory_text
     
     async def get_world_stats(self) -> str:
-        """Obtiene estadísticas del mundo"""
+        """Obtiene estadísticas del mundo incluyendo búsqueda vectorial"""
         stats = await self.mcp.get_mcp_memory_stats()
+        vector_stats = await self.mcp.get_vector_search_stats()
+        
+        vector_info = ""
+        if vector_stats.get('status') == 'active':
+            vector_info = f"""
+🔍 BÚSQUEDA VECTORIAL:
+- Estado: {vector_stats['status']}
+- Objetos indexados: {vector_stats.get('objects', {}).get('document_count', 0)}
+- Ubicaciones indexadas: {vector_stats.get('locations', {}).get('document_count', 0)}
+- Eventos indexados: {vector_stats.get('events', {}).get('document_count', 0)}"""
+        else:
+            vector_info = f"🔍 BÚSQUEDA VECTORIAL: {vector_stats.get('status', 'no disponible')}"
         
         return f"""
-🌍 ESTADÍSTICAS DEL MUNDO:
+🌍 ESTADÍSTICAS DEL MUNDO v1.1.0:
 - Ubicaciones: {stats['total_locations']}
 - Objetos: {stats['total_objects']}  
 - Eventos registrados: {stats['total_events']}
 - Integridad de memoria: {stats['memory_integrity']}
 - Primer evento: {stats['first_recorded_event'] or 'N/A'}
 - Último evento: {stats['last_recorded_event'] or 'N/A'}
+{vector_info}
 """
+    
+    async def _handle_vector_search_commands(self, command: str) -> bool:
+        """Detecta si el comando requiere búsqueda vectorial especial"""
+        vector_keywords = [
+            "buscar objetos", "buscar herramientas", "encontrar similar",
+            "objetos como", "herramientas de", "analizar patrones",
+            "recomendar objetos", "objetos parecidos", "similar a"
+        ]
+        
+        command_lower = command.lower()
+        return any(keyword in command_lower for keyword in vector_keywords)
+    
+    async def _process_vector_search_command(self, command: str) -> str:
+        """Procesa comandos específicos de búsqueda vectorial"""
+        command_lower = command.lower()
+        
+        try:
+            # Buscar objetos similares
+            if "buscar objetos como" in command_lower or "objetos parecidos" in command_lower:
+                # Extraer el objeto de referencia
+                if "como" in command_lower:
+                    search_term = command_lower.split("como")[1].strip()
+                else:
+                    search_term = command_lower.replace("objetos parecidos", "").strip()
+                
+                results = await self.mcp.search_objects_by_description(search_term, limit=5)
+                return self._format_search_results("objetos similares", results, search_term)
+            
+            # Buscar herramientas por función
+            elif "buscar herramientas de" in command_lower or "herramientas para" in command_lower:
+                if "de" in command_lower:
+                    search_term = command_lower.split("de")[1].strip()
+                else:
+                    search_term = command_lower.split("para")[1].strip()
+                
+                results = await self.mcp.find_objects_by_pattern(f"herramientas {search_term}")
+                return self._format_search_results("herramientas especializadas", results, search_term)
+            
+            # Analizar patrones de ubicación
+            elif "analizar patrones" in command_lower:
+                if not await self.mcp.vector_initialized:
+                    return "🔍 La búsqueda vectorial aún no está disponible."
+                
+                patterns = await self.mcp.vector_engine.analyze_location_patterns(self.current_location_id)
+                return self._format_pattern_analysis(patterns)
+            
+            # Recomendaciones generales
+            elif "recomendar objetos" in command_lower:
+                player_inventory = await self._get_player_inventory()
+                if not player_inventory:
+                    results = await self.mcp.search_objects_by_description("herramientas útiles", limit=3)
+                else:
+                    # Buscar objetos complementarios al último en inventario
+                    last_object = player_inventory[-1]
+                    results = await self.mcp.vector_engine.find_similar_objects(last_object, limit=3)
+                    
+                return self._format_recommendations(results)
+            
+            else:
+                # Búsqueda general
+                results = await self.mcp.search_objects_by_description(command, limit=5)
+                return self._format_search_results("búsqueda general", results, command)
+                
+        except Exception as e:
+            self.logger.error(f"Error en búsqueda vectorial: {e}")
+            return f"🔍 Error en búsqueda vectorial: {str(e)}"
+    
+    def _format_search_results(self, search_type: str, results: List[Dict], query: str) -> str:
+        """Formatea resultados de búsqueda vectorial"""
+        if not results:
+            return f"🔍 No se encontraron {search_type} para '{query}'."
+        
+        response = f"🔍 **{search_type.upper()}** para '{query}':\n\n"
+        
+        for i, result in enumerate(results[:5], 1):
+            name = result.get('name', 'Objeto sin nombre')
+            location = result.get('location_id', 'Ubicación desconocida')
+            score = result.get('similarity_score', 0)
+            
+            response += f"{i}. **{name}**\n"
+            response += f"   📍 Ubicación: {location}\n"
+            response += f"   🎯 Relevancia: {score:.1%}\n"
+            
+            properties = result.get('properties', {})
+            if properties:
+                prop_list = [f"{k}: {v}" for k, v in properties.items() if v]
+                if prop_list:
+                    response += f"   📊 Propiedades: {', '.join(prop_list[:3])}\n"
+            
+            response += "\n"
+        
+        return response
+    
+    def _format_pattern_analysis(self, patterns: Dict[str, Any]) -> str:
+        """Formatea análisis de patrones"""
+        if not patterns.get('patterns'):
+            return "🔍 No se detectaron patrones significativos en esta ubicación."
+        
+        response = f"🔍 **ANÁLISIS DE PATRONES** - {self.current_location_id}:\n\n"
+        response += f"📊 Objetos analizados: {patterns.get('total_objects', 0)}\n"
+        response += f"📈 Patrones encontrados: {len(patterns['patterns'])}\n\n"
+        
+        for i, pattern in enumerate(patterns['patterns'][:5], 1):
+            response += f"{i}. **{pattern['object1']}** ↔ **{pattern['object2']}**\n"
+            response += f"   🎯 Similitud: {pattern['similarity']:.1%}\n"
+            response += f"   📝 Tipo: {pattern.get('pattern_type', 'semantic_similarity')}\n\n"
+        
+        response += f"💡 **Resumen**: {patterns.get('summary', 'Análisis completado')}"
+        
+        return response
+    
+    def _format_recommendations(self, results: List) -> str:
+        """Formatea recomendaciones de objetos"""
+        if not results:
+            return "🔍 No hay recomendaciones disponibles en este momento."
+        
+        response = "💡 **RECOMENDACIONES INTELIGENTES**:\n\n"
+        
+        for i, result in enumerate(results[:3], 1):
+            if isinstance(result, dict):
+                name = result.get('name', 'Objeto recomendado')
+                score = result.get('similarity_score', 0)
+                response += f"{i}. **{name}** (relevancia: {score:.1%})\n"
+            else:
+                # Es un SearchResult
+                name = result.document.metadata.get('name', 'Objeto recomendado')
+                score = result.similarity_score
+                response += f"{i}. **{name}** (relevancia: {score:.1%})\n"
+        
+        response += "\n💬 Estas recomendaciones se basan en análisis semántico de tus objetos actuales."
+        
+        return response
+    
+    async def _get_player_inventory(self) -> List[str]:
+        """Obtiene lista de IDs de objetos en el inventario del jugador"""
+        try:
+            inventory_objects = await self.memory.get_objects_in_location("inventory_player")
+            return [obj.id for obj in inventory_objects]
+        except:
+            return []
+    
+    async def _get_recent_actions(self, limit: int = 5) -> List[str]:
+        """Obtiene acciones recientes del jugador"""
+        try:
+            cursor = self.memory.db_connection.execute("""
+                SELECT action FROM game_events 
+                WHERE actor = ? 
+                ORDER BY timestamp DESC 
+                LIMIT ?
+            """, (self.player_id, limit))
+            
+            return [row[0] for row in cursor.fetchall()]
+        except:
+            return []
     
     async def close(self):
         """Cierra todas las conexiones"""
