@@ -24,6 +24,12 @@ asyncio-mqtt
 fastapi>=0.100.0
 uvicorn
 
+# Backup y compresión
+zipfile36
+schedule>=1.2.0
+python-dateutil>=2.8.0
+cryptography>=41.0.0
+
 # Testing y desarrollo
 pytest>=7.0.0
 pytest-asyncio

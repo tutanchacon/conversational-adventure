@@ -1,0 +1,11 @@
+{
+  "backup_id": "backup_20250823_194635",
+  "timestamp": "2025-08-23T19:46:35.464438",
+  "version": "1.1.0",
+  "size_bytes": 109408,
+  "files_count": 37,
+  "integrity_hash": "ef1b111c3ce782e04c5ae16a76d198a14cf40f119ad3991b2c6d6c7188af8af0",
+  "backup_type": "professional_v1.1.0",
+  "game_state_summary": "No game database found",
+  "is_encrypted": false
+}
