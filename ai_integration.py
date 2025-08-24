@@ -33,9 +33,10 @@ class AIAdventureGame:
         self.memory_system = None
         self.ai_engine = None
         
-        # Configuración de IA
+        # Configuración de IA con Ollama
         self.ai_config = {
-            "openai_api_key": os.getenv("OPENAI_API_KEY"),
+            "ollama_host": os.getenv("OLLAMA_HOST", "http://localhost:11434"),
+            "ollama_model": os.getenv("OLLAMA_MODEL", "llama3.2:latest"),
             "personality": AIPersonality.FRIENDLY,
             "enable_voice": False,
             "enable_predictions": True,
@@ -64,15 +65,14 @@ class AIAdventureGame:
             # 2. Inicializar juego original (comentado hasta tener la clase)
             # self.original_game = AdventureGame(self.db_path)
             
-            # 3. Verificar API key de OpenAI
-            if not self.ai_config["openai_api_key"]:
-                logger.warning("⚠️ OPENAI_API_KEY not found. AI features will be limited.")
-                self.ai_config["openai_api_key"] = "demo-key"
+            # 3. Configurar Ollama
+            ollama_host = self.ai_config.get("ollama_host", "http://localhost:11434")
+            logger.info(f"🤖 Using Ollama at: {ollama_host}")
             
-            # 4. Inicializar motor de IA
+            # 4. Inicializar motor de IA con Ollama
             self.ai_engine = await initialize_ai_engine(
                 self.memory_system, 
-                self.ai_config["openai_api_key"]
+                ollama_host
             )
             
             # 5. Configurar personalidad

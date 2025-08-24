@@ -11,7 +11,6 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
-import openai
 from memory_system import PerfectMemorySystem
 import chromadb
 from chromadb.config import Settings
@@ -269,13 +268,14 @@ class NLPProcessor:
 class SmartNarrator:
     """Narrador inteligente con personalidad adaptativa"""
     
-    def __init__(self, openai_api_key: str):
-        self.openai_client = openai.OpenAI(api_key=openai_api_key)
+    def __init__(self, ollama_host: str = "http://localhost:11434"):
+        self.ollama_host = ollama_host
+        self.ollama_model = "llama3.2:latest"  # Usar el modelo que ya tienes
         self.personality = AIPersonality.FRIENDLY
         self.narrative_memory = []
         self.coherence_context = {}
         
-        logger.info("🎭 Smart Narrator initialized")
+        logger.info("🎭 Smart Narrator initialized with Ollama")
     
     async def generate_response(self, context: AIContext, user_input: str) -> AIResponse:
         """Generar respuesta narrativa inteligente"""
@@ -285,8 +285,8 @@ class SmartNarrator:
             # Construir prompt contextual
             prompt = self._build_contextual_prompt(context, user_input)
             
-            # Generar respuesta con OpenAI
-            response = await self._call_openai(prompt)
+            # Generar respuesta con Ollama
+            response = await self._call_ollama(prompt)
             
             # Procesar y mejorar respuesta
             enhanced_response = self._enhance_response(response, context)
@@ -389,26 +389,40 @@ Please respond with a simple narrative text. Keep it immersive and engaging.
         
         return "\n".join(formatted)
     
-    async def _call_openai(self, prompt: str) -> Dict[str, Any]:
-        """Llamar a OpenAI con manejo de errores"""
+    async def _call_ollama(self, prompt: str) -> Dict[str, Any]:
+        """Llamar a Ollama con manejo de errores"""
         try:
-            response = self.openai_client.chat.completions.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": "You are a creative, intelligent adventure game narrator."},
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=500,
-                temperature=0.7
+            import urllib.request
+            import urllib.parse
+            import json
+            
+            # Preparar datos para Ollama
+            data = {
+                "model": self.ollama_model,
+                "prompt": prompt,
+                "stream": False,
+                "options": {
+                    "temperature": 0.7,
+                    "num_predict": 500
+                }
+            }
+            
+            # Convertir datos a JSON
+            json_data = json.dumps(data).encode('utf-8')
+            
+            # Crear petición HTTP
+            req = urllib.request.Request(
+                f"{self.ollama_host}/api/generate",
+                data=json_data,
+                headers={'Content-Type': 'application/json'}
             )
             
-            content = response.choices[0].message.content
-            
-            # Intentar parsear como JSON
-            try:
-                return json.loads(content)
-            except:
-                # Si no es JSON válido, crear estructura
+            # Realizar petición
+            with urllib.request.urlopen(req, timeout=30) as response:
+                result = json.loads(response.read().decode('utf-8'))
+                content = result.get("response", "No response from Ollama")
+                
+                # Crear estructura de respuesta
                 return {
                     "narrative": content,
                     "suggestions": ["continue", "explore", "examine surroundings"],
@@ -416,7 +430,7 @@ Please respond with a simple narrative text. Keep it immersive and engaging.
                 }
                 
         except Exception as e:
-            logger.error(f"❌ OpenAI API error: {e}")
+            logger.error(f"❌ Ollama API error: {e}")
             raise
     
     def _enhance_response(self, response: Dict[str, Any], context: AIContext) -> Dict[str, Any]:
@@ -553,11 +567,11 @@ class PredictiveEngine:
 class AIEngine:
     """Motor principal de IA que coordina todos los componentes"""
     
-    def __init__(self, memory_system: PerfectMemorySystem, openai_api_key: str):
+    def __init__(self, memory_system: PerfectMemorySystem, ollama_host: str = "http://localhost:11434"):
         self.memory = memory_system
         self.rag_system = EnhancedRAGSystem(memory_system)
         self.nlp_processor = NLPProcessor()
-        self.narrator = SmartNarrator(openai_api_key)
+        self.narrator = SmartNarrator(ollama_host)
         self.predictor = PredictiveEngine(memory_system)
         
         # Estado del motor
@@ -701,13 +715,13 @@ class AIEngine:
 
 # Función de inicialización para uso externo
 async def initialize_ai_engine(memory_system: PerfectMemorySystem, 
-                              openai_api_key: str) -> AIEngine:
-    """Inicializar motor de IA completo"""
+                              ollama_host: str = "http://localhost:11434") -> AIEngine:
+    """Inicializar motor de IA completo con Ollama"""
     
     logger.info("🚀 Initializing AI Engine...")
     
     try:
-        engine = AIEngine(memory_system, openai_api_key)
+        engine = AIEngine(memory_system, ollama_host)
         
         logger.info("✅ AI Engine initialized successfully!")
         logger.info("🧠 Features available:")
