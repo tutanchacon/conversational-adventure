@@ -207,9 +207,9 @@ class AIAdventureGame:
                     "is_game_mechanic": True
                 }
                 
-            elif any(word in command_lower for word in ["look", "mirar", "observar", "ver"]):
+            elif any(word in command_lower for word in ["look", "mirar", "observar", "ver", "l", "examinar"]):
                 # Comando mirar - delegar al juego original
-                # El juego original manejará la descripción completa
+                logger.info(f"🎮 Look command detected: '{command}'")
                 return {
                     "action": "look", 
                     "success": True,
@@ -228,8 +228,9 @@ class AIAdventureGame:
                     "delegate_to_original": True
                 }
                 
-            elif any(word in command_lower for word in ["go", "move", "ir", "caminar", "north", "south", "east", "west", "norte", "sur", "este", "oeste"]):
+            elif any(word in command_lower for word in ["go", "move", "ir", "caminar", "north", "south", "east", "west", "norte", "sur", "este", "oeste", "n", "s", "e", "o"]):
                 # Comando movimiento - delegar al juego original
+                logger.info(f"🎮 Movement command detected: '{command}'")
                 return {
                     "action": "move",
                     "success": True,
@@ -363,31 +364,19 @@ class AIAdventureGame:
             if not self.original_game:
                 return "Game not initialized"
             
-            # El IntelligentAdventureGame tiene un método para procesar comandos
-            # Necesitamos usar su interfaz de procesamiento
-            command_lower = command.lower().strip()
+            # ✅ SOLUCIÓN: Usar el método correcto del juego original
+            # El IntelligentAdventureGame tiene process_command_async que es lo que necesitamos
+            logger.info(f"🎮 Calling original game with command: '{command}'")
             
-            # Mapear comandos específicos
-            if any(word in command_lower for word in ["look", "mirar", "observar", "ver"]):
-                # Obtener descripción de ubicación actual
-                current_location = await self._get_player_location(player_id)
-                return await self._get_location_description(current_location)
-                
-            elif any(word in command_lower for word in ["take", "get", "tomar", "coger", "agarrar"]):
-                # Procesar tomar objeto
-                return await self._handle_take_command(command)
-                
-            elif any(word in command_lower for word in ["drop", "dejar", "soltar"]):
-                # Procesar dejar objeto
-                return await self._handle_drop_command(command)
-                
-            else:
-                # Para otros comandos, usar el procesamiento general del juego original
-                return "Command processed by original game"
+            # Usar el procesador de comandos real del juego
+            game_response = await self.original_game.process_command_async(command)
+            
+            logger.info(f"✅ Original game response received: {len(game_response)} chars")
+            return game_response
                 
         except Exception as e:
             logger.error(f"❌ Error calling original game: {e}")
-            return f"Error processing command: {e}"
+            return f"Error processing command with original game: {e}"
     
     async def _get_location_description(self, location_id: str) -> str:
         """Obtener descripción de una ubicación"""

@@ -73,7 +73,25 @@
 
 ---
 
-## ✅ **ESTADO ACTUALIZADO - 24/08/2025**
+## 🚨 **PROBLEMA IDENTIFICADO Y SOLUCIONADO - 24/08/2025**
+
+### ❌ **Bug Fix: Comandos del Juego No se Procesaban Correctamente**
+- **Problema**: IA trataba todos los comandos como "unknown" (confidence 0.30)
+- **Causa**: `ai_integration.py` no llamaba correctamente a `process_command_async()` del juego original
+- **Síntomas**: 
+  - "mirar" → unknown en lugar de descripción de ubicación
+  - "este" → unknown en lugar de movimiento
+  - Solo respuestas de IA, sin mecánicas del juego
+- **✅ Solución Aplicada**: 
+  - Corregido `_call_original_game()` para usar `process_command_async()`
+  - Mejorada detección de comandos (añadidos "l", "n", "s", "e", "o")
+  - Añadido logging para debugging
+
+### ⚠️ **Requiere Testing Inmediato**
+- [ ] Probar comando "mirar" → debe mostrar descripción de ubicación
+- [ ] Probar comando "este" → debe intentar movimiento
+- [ ] Probar comando "inventario" → debe mostrar items
+- [ ] Verificar que mecánicas del juego funcionan junto con IA
 
 ### ✅ **Sistema de IA CONFIRMADO FUNCIONAL**
 - **Sistema AI v3.0**: ✅ **COMPLETAMENTE OPERATIVO**
