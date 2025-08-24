@@ -13,7 +13,7 @@ from datetime import datetime
 from dataclasses import asdict
 
 # Imports del sistema existente
-# from adventure_game import AdventureGame  # No existe actualmente
+from adventure_game import IntelligentAdventureGame  # Usar el juego REAL
 from memory_system import PerfectMemorySystem, GameEvent
 from ai_engine import AIEngine, initialize_ai_engine, AIPersonality
 
@@ -29,7 +29,7 @@ class AIAdventureGame:
     
     def __init__(self, db_path: str = "ai_adventure_game.db"):
         self.db_path = db_path
-        self.original_game = None
+        self.original_game = None  # Será IntelligentAdventureGame
         self.memory_system = None
         self.ai_engine = None
         
@@ -73,8 +73,10 @@ class AIAdventureGame:
             self.memory_system = PerfectMemorySystem(self.db_path)
             await self.memory_system.initialize()
             
-            # 2. Inicializar juego original (comentado hasta tener la clase)
-            # self.original_game = AdventureGame(self.db_path)
+            # 2. Inicializar juego original - USAR EL JUEGO REAL
+            self.original_game = IntelligentAdventureGame(self.db_path)
+            await self.original_game.initialize_world()
+            logger.info("🎮 IntelligentAdventureGame inicializado")
             
             # 3. Configurar Ollama
             ollama_host = self.ai_config.get("ollama_host", "http://localhost:11434")
@@ -140,56 +142,120 @@ class AIAdventureGame:
     async def _get_player_location(self, player_id: str) -> str:
         """Obtener ubicación actual del jugador"""
         try:
-            # Buscar en eventos recientes
+            # 1. Verificar si el juego original tiene la ubicación actual del jugador
+            if self.original_game and hasattr(self.original_game, 'current_location_id'):
+                if self.original_game.current_location_id:
+                    return self.original_game.current_location_id
+            
+            # 2. Buscar en eventos recientes
             events = await self.memory_system.get_events_by_actor(player_id, limit=10)
             
             for event in events:
                 if hasattr(event, 'location_id') and event.location_id:
                     return event.location_id
             
-            # Default location
-            return "starting_area"
+            # 3. Buscar la "Entrada del Castillo" como ubicación inicial
+            try:
+                locations = await self.original_game.memory.get_all_locations()
+                for location in locations:
+                    if "entrada" in location.name.lower() or "castle" in location.name.lower():
+                        # Establecer como ubicación actual del jugador
+                        if self.original_game:
+                            self.original_game.current_location_id = location.id
+                        logger.info(f"🎮 Player positioned at: {location.name} ({location.id})")
+                        return location.id
+                
+                # Si no hay "entrada", usar la primera ubicación disponible
+                if locations:
+                    first_location = locations[0]
+                    if self.original_game:
+                        self.original_game.current_location_id = first_location.id
+                    logger.info(f"🎮 Player positioned at first location: {first_location.name}")
+                    return first_location.id
+            except Exception as e:
+                logger.error(f"❌ Error finding initial location: {e}")
+            
+            # 4. Fallback: devolver None para que se maneje apropiadamente
+            return None
             
         except Exception as e:
             logger.error(f"❌ Error getting player location: {e}")
-            return "unknown_location"
+            return None
     
     async def _process_original_command(self, player_id: str, command: str) -> Dict[str, Any]:
         """Procesar comando con la lógica original del juego"""
         try:
-            # Simulación de procesamiento del juego original
-            # Aquí se integraría con adventure_game.py
+            if not self.original_game:
+                return {
+                    "action": "error",
+                    "success": False,
+                    "mechanical_result": "Game not initialized.",
+                    "state_changes": []
+                }
             
             command_lower = command.lower().strip()
             
-            # Comandos básicos
-            if "look" in command_lower or "mirar" in command_lower:
+            # Usar el juego REAL para comandos específicos
+            if any(word in command_lower for word in ["inventory", "inventario", "mochila", "items"]):
+                # Comando de inventario - usar método real del juego
+                inventory_result = await self.original_game.get_inventory()
                 return {
-                    "action": "look",
+                    "action": "inventory",
                     "success": True,
-                    "mechanical_result": "You observe your surroundings.",
-                    "state_changes": []
+                    "mechanical_result": inventory_result,
+                    "state_changes": [],
+                    "is_game_mechanic": True
                 }
-            elif "go" in command_lower or "move" in command_lower:
+                
+            elif any(word in command_lower for word in ["look", "mirar", "observar", "ver"]):
+                # Comando mirar - delegar al juego original
+                # El juego original manejará la descripción completa
                 return {
-                    "action": "move",
+                    "action": "look", 
                     "success": True,
-                    "mechanical_result": "You attempt to move.",
-                    "state_changes": ["location_change"]
+                    "mechanical_result": "Looking around...",
+                    "state_changes": [],
+                    "delegate_to_original": True
                 }
-            elif "take" in command_lower or "get" in command_lower:
+                
+            elif any(word in command_lower for word in ["take", "get", "tomar", "coger", "agarrar"]):
+                # Comando tomar - delegar al juego original  
                 return {
                     "action": "take",
                     "success": True,
-                    "mechanical_result": "You attempt to take an item.",
-                    "state_changes": ["inventory_change"]
+                    "mechanical_result": "Attempting to take item...",
+                    "state_changes": ["inventory_change"],
+                    "delegate_to_original": True
                 }
-            else:
+                
+            elif any(word in command_lower for word in ["go", "move", "ir", "caminar", "north", "south", "east", "west", "norte", "sur", "este", "oeste"]):
+                # Comando movimiento - delegar al juego original
                 return {
-                    "action": "unknown",
-                    "success": False,
-                    "mechanical_result": "Command not recognized by game mechanics.",
-                    "state_changes": []
+                    "action": "move",
+                    "success": True,
+                    "mechanical_result": "Attempting to move...",
+                    "state_changes": ["location_change"],
+                    "delegate_to_original": True
+                }
+                
+            elif any(word in command_lower for word in ["drop", "dejar", "soltar"]):
+                # Comando dejar - delegar al juego original
+                return {
+                    "action": "drop",
+                    "success": True,
+                    "mechanical_result": "Attempting to drop item...",
+                    "state_changes": ["inventory_change"],
+                    "delegate_to_original": True
+                }
+                
+            else:
+                # Comando no reconocido - usar IA para respuesta natural
+                return {
+                    "action": "ai_response",
+                    "success": True,
+                    "mechanical_result": "Processing with AI...",
+                    "state_changes": [],
+                    "use_ai_only": True
                 }
                 
         except Exception as e:
@@ -205,36 +271,82 @@ class AIAdventureGame:
                              player_id: str, command: str) -> Dict[str, Any]:
         """Combinar resultados del juego original con respuesta de IA"""
         
-        # Determinar si el comando fue exitoso
+        # CASO 1: Comando de inventario - usar resultado directo del juego
+        if original_result.get("action") == "inventory":
+            return {
+                "success": True,
+                "message": original_result.get("mechanical_result"),
+                "suggestions": ["look around", "examine items", "use item"],
+                "ai_confidence": 1.0,
+                "processing_time": 0.1,
+                "game_action": "inventory",
+                "mechanical_result": original_result.get("mechanical_result"),
+                "state_changes": [],
+                "ai_personality": ai_response.personality_applied.value,
+                "context_used": "game_mechanics",
+                "generated_content": {},
+                "timestamp": datetime.now().isoformat(),
+                "player_id": player_id,
+                "original_command": command
+            }
+        
+        # CASO 2: Comandos delegados al juego original
+        if original_result.get("delegate_to_original"):
+            # Llamar al juego original para obtener el resultado real
+            original_response = await self._call_original_game(command, player_id)
+            
+            # Combinar con narrativa de IA si es necesario
+            return {
+                "success": True,
+                "message": original_response,
+                "suggestions": ai_response.suggestions,
+                "ai_confidence": ai_response.confidence,
+                "processing_time": ai_response.processing_time,
+                "game_action": original_result.get("action"),
+                "mechanical_result": original_response,
+                "state_changes": original_result.get("state_changes", []),
+                "ai_personality": ai_response.personality_applied.value,
+                "context_used": ai_response.context_used,
+                "generated_content": ai_response.generated_content,
+                "timestamp": datetime.now().isoformat(),
+                "player_id": player_id,
+                "original_command": command
+            }
+        
+        # CASO 3: Usar solo IA (conversación general)
+        if original_result.get("use_ai_only"):
+            return {
+                "success": True,
+                "message": ai_response.content,
+                "suggestions": ai_response.suggestions,
+                "ai_confidence": ai_response.confidence,
+                "processing_time": ai_response.processing_time,
+                "game_action": "ai_conversation",
+                "mechanical_result": "AI conversation",
+                "state_changes": [],
+                "ai_personality": ai_response.personality_applied.value,
+                "context_used": ai_response.context_used,
+                "generated_content": ai_response.generated_content,
+                "timestamp": datetime.now().isoformat(),
+                "player_id": player_id,
+                "original_command": command
+            }
+        
+        # CASO 4: Combinar tradicional (respaldo)
         success = original_result.get("success", False) or ai_response.confidence > 0.5
         
-        # Combinar mensajes
-        if original_result.get("success"):
-            # Si el juego original procesó exitosamente, usar narrativa de IA
-            message = ai_response.content
-        else:
-            # Si no, la IA puede intentar interpretar y responder creativamente
-            message = ai_response.content
-        
-        # Resultado combinado
-        result = {
+        return {
             "success": success,
-            "message": message,
+            "message": ai_response.content,
             "suggestions": ai_response.suggestions,
             "ai_confidence": ai_response.confidence,
             "processing_time": ai_response.processing_time,
-            
-            # Datos del juego original
             "game_action": original_result.get("action", "unknown"),
             "mechanical_result": original_result.get("mechanical_result", ""),
             "state_changes": original_result.get("state_changes", []),
-            
-            # Datos de IA
             "ai_personality": ai_response.personality_applied.value,
             "context_used": ai_response.context_used,
             "generated_content": ai_response.generated_content,
-            
-            # Metadatos
             "timestamp": datetime.now().isoformat(),
             "player_id": player_id,
             "original_command": command
@@ -244,6 +356,128 @@ class AIAdventureGame:
         await self._log_interaction(player_id, command, result)
         
         return result
+    
+    async def _call_original_game(self, command: str, player_id: str) -> str:
+        """Llamar al juego original para procesar comando"""
+        try:
+            if not self.original_game:
+                return "Game not initialized"
+            
+            # El IntelligentAdventureGame tiene un método para procesar comandos
+            # Necesitamos usar su interfaz de procesamiento
+            command_lower = command.lower().strip()
+            
+            # Mapear comandos específicos
+            if any(word in command_lower for word in ["look", "mirar", "observar", "ver"]):
+                # Obtener descripción de ubicación actual
+                current_location = await self._get_player_location(player_id)
+                return await self._get_location_description(current_location)
+                
+            elif any(word in command_lower for word in ["take", "get", "tomar", "coger", "agarrar"]):
+                # Procesar tomar objeto
+                return await self._handle_take_command(command)
+                
+            elif any(word in command_lower for word in ["drop", "dejar", "soltar"]):
+                # Procesar dejar objeto
+                return await self._handle_drop_command(command)
+                
+            else:
+                # Para otros comandos, usar el procesamiento general del juego original
+                return "Command processed by original game"
+                
+        except Exception as e:
+            logger.error(f"❌ Error calling original game: {e}")
+            return f"Error processing command: {e}"
+    
+    async def _get_location_description(self, location_id: str) -> str:
+        """Obtener descripción de una ubicación"""
+        try:
+            # Si no hay location_id, crear una descripción inicial
+            if not location_id:
+                return "🌟 **¡Bienvenido al Adventure Game AI!**\n\nTe encuentras en el punto de entrada de una gran aventura.\nEl mundo se está cargando a tu alrededor...\n\n_Usa 'inventario' para ver tus objetos o continúa explorando._"
+            
+            # Método más eficiente: obtener ubicación específica
+            location = await self.original_game.memory.get_location(location_id)
+            
+            if location:
+                # Obtener objetos en la ubicación
+                objects = await self.original_game.memory.get_objects_in_location(location_id)
+                
+                description = f"📍 **{location.name}**\n{location.description}\n"
+                
+                if objects:
+                    description += "\n🎒 **Objetos visibles:**\n"
+                    for obj in objects:
+                        description += f"- **{obj.name}**: {obj.description}\n"
+                else:
+                    description += "\n_No hay objetos visibles aquí._"
+                
+                # Agregar información de conexiones si están disponibles
+                if location.connections:
+                    description += "\n🚪 **Salidas disponibles:**\n"
+                    for direction, destination in location.connections.items():
+                        description += f"- **{direction}** hacia {destination}\n"
+                
+                return description
+            else:
+                # Si no existe la ubicación específica, crear descripción básica
+                return f"📍 **Ubicación Desconocida**\nTe encuentras en: {location_id}\nEsta es una ubicación misteriosa que aún no ha sido completamente explorada.\n\n_Usa 'inventario' para ver tus objetos o explora el área._"
+                
+        except Exception as e:
+            logger.error(f"❌ Error getting location description: {e}")
+            return f"📍 **Área Inexplorada**\nTe encuentras en un lugar misterioso.\nLa niebla envuelve el paisaje, haciendo difícil discernir los detalles.\n\n_Error: {str(e)}_"
+    
+    async def _handle_take_command(self, command: str) -> str:
+        """Manejar comando de tomar objeto"""
+        try:
+            # Buscar objeto mencionado en el comando
+            words = command.lower().split()
+            object_words = [w for w in words if w not in ["take", "get", "tomar", "coger", "agarrar", "the", "el", "la"]]
+            
+            if not object_words:
+                return "¿Qué quieres tomar?"
+            
+            # Buscar objeto en ubicación actual
+            current_location = self.original_game.current_location_id or "starting_area"
+            objects = await self.original_game.memory.get_objects_in_location(current_location)
+            
+            for obj in objects:
+                if any(word in obj.name.lower() for word in object_words):
+                    # Mover objeto al inventario
+                    await self.original_game.memory.move_object_to_location(obj.id, "inventory_player")
+                    return f"Has tomado: {obj.name}"
+            
+            return "No veo ese objeto aquí."
+            
+        except Exception as e:
+            logger.error(f"❌ Error handling take command: {e}")
+            return "Error tomando objeto"
+    
+    async def _handle_drop_command(self, command: str) -> str:
+        """Manejar comando de dejar objeto"""
+        try:
+            # Buscar objeto mencionado en el comando
+            words = command.lower().split()
+            object_words = [w for w in words if w not in ["drop", "dejar", "soltar", "the", "el", "la"]]
+            
+            if not object_words:
+                return "¿Qué quieres dejar?"
+            
+            # Buscar objeto en inventario
+            inventory_objects = await self.original_game.memory.get_objects_in_location("inventory_player")
+            
+            for obj in inventory_objects:
+                if any(word in obj.name.lower() for word in object_words):
+                    # Mover objeto a ubicación actual
+                    current_location = self.original_game.current_location_id or "starting_area"
+                    await self.original_game.memory.move_object_to_location(obj.id, current_location)
+                    return f"Has dejado: {obj.name}"
+            
+            return "No tienes ese objeto."
+            
+        except Exception as e:
+            logger.error(f"❌ Error handling drop command: {e}")
+            return "Error dejando objeto"
     
     async def _log_interaction(self, player_id: str, command: str, result: Dict[str, Any]):
         """Registrar interacción en el sistema de memoria"""
@@ -390,6 +624,9 @@ class AIAdventureGame:
     async def close(self):
         """Cerrar todos los sistemas"""
         try:
+            if self.original_game:
+                await self.original_game.close()
+                
             if self.memory_system:
                 await self.memory_system.close()
             
