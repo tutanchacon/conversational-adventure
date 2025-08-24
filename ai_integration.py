@@ -6,6 +6,7 @@ Integra el sistema de IA avanzado con el juego existente
 
 import asyncio
 import os
+import uuid
 import logging
 from typing import Dict, Any, Optional
 from datetime import datetime
@@ -131,8 +132,8 @@ class AIAdventureGame:
             events = await self.memory_system.get_events_by_actor(player_id, limit=10)
             
             for event in events:
-                if event.get('location_id'):
-                    return event['location_id']
+                if hasattr(event, 'location_id') and event.location_id:
+                    return event.location_id
             
             # Default location
             return "starting_area"
@@ -236,12 +237,14 @@ class AIAdventureGame:
         """Registrar interacción en el sistema de memoria"""
         try:
             event = GameEvent(
-                event_type="ai_interaction",
+                id=str(uuid.uuid4()),
                 timestamp=datetime.now(),
-                actor_id=player_id,
-                action_type="command",
+                event_type="ai_interaction",
+                actor=player_id,
+                action=f"executed command: {command}",
+                target=None,
                 location_id=await self._get_player_location(player_id),
-                details={
+                context={
                     "command": command,
                     "success": result["success"],
                     "ai_confidence": result["ai_confidence"],

@@ -38,6 +38,9 @@ MANIFEST
 *.db
 *.sqlite
 *.sqlite3
+*.db-shm
+*.db-wal
+*.db-journal
 
 # Archivos de configuración sensibles
 .env
@@ -45,6 +48,23 @@ MANIFEST
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Archivos de memoria AI y vectoriales
+ai_enhanced_memory/
+vector_db/
+*.chroma
+*.faiss
+*.index
+
+# Modelos de AI descargados y cachés
+models/
+model_cache/
+.cache/
+transformers_cache/
+sentence_transformers/
+
+# Cachés de HuggingFace
+.huggingface/
 
 # Archivos de sistema
 .DS_Store
@@ -88,6 +108,16 @@ test_*.db
 demo_*.db
 *_test_world.db
 
+# Reportes de sistema generados
+dxdiag_output.txt
+system_info.txt
+*.dmp
+
+# Instaladores descargados
+cuda_installer.exe
+*.msi
+*.exe (excepto releases)
+
 # Documentos compilados (mantener fuentes)
 *.pdf
 *.docx
@@ -96,6 +126,12 @@ demo_*.db
 *.zip
 *.tar.gz
 *.rar
+
+# Archivos de backup automático
+backups/*/
+backups/metadata/
+*.backup
+*.bak
 
 # Except: mantener archivo de documentación final
 !Adventure_Game_MCP_Documentation_*.zip

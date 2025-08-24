@@ -326,6 +326,9 @@ class SmartNarrator:
             AIPersonality.ADVENTUROUS: "bold, exciting, action-oriented"
         }
         
+        # Formatear world_state de manera segura
+        world_state_str = str(context.world_state) if context.world_state else "Empty world state"
+        
         prompt = f"""You are an AI narrator for an adventure game with perfect memory. 
 
 PERSONALITY: {personality_traits[self.personality]}
@@ -342,7 +345,7 @@ RELEVANT MEMORIES:
 {self._format_memories(context.relevant_memories)}
 
 WORLD STATE:
-{json.dumps(context.world_state, indent=2)}
+{world_state_str}
 
 PLAYER INPUT: "{user_input}"
 
@@ -355,15 +358,7 @@ INSTRUCTIONS:
 6. Suggest 2-3 possible actions
 
 RESPONSE FORMAT:
-{
-  "narrative": "Your narrative response here",
-  "suggestions": ["action 1", "action 2", "action 3"],
-  "generated_elements": {
-    "new_objects": [],
-    "environmental_changes": [],
-    "mood_shift": ""
-  }
-}
+Please respond with a simple narrative text. Keep it immersive and engaging.
 """
         
         return prompt
@@ -375,7 +370,9 @@ RESPONSE FORMAT:
         
         formatted = []
         for event in events[-5:]:  # Últimos 5 eventos
-            formatted.append(f"- {event.get('timestamp', 'unknown')}: {event.get('description', '')}")
+            timestamp = event.timestamp.isoformat() if hasattr(event, 'timestamp') else 'unknown'
+            description = event.action if hasattr(event, 'action') else ''
+            formatted.append(f"- {timestamp}: {description}")
         
         return "\n".join(formatted)
     
@@ -496,8 +493,8 @@ class PredictiveEngine:
         location_counts = {}
         
         for event in events:
-            action = event.get('action_type', 'unknown')
-            location = event.get('location_id', 'unknown')
+            action = event.event_type if hasattr(event, 'event_type') else 'unknown'
+            location = event.location_id if hasattr(event, 'location_id') else 'unknown'
             
             action_counts[action] = action_counts.get(action, 0) + 1
             location_counts[location] = location_counts.get(location, 0) + 1

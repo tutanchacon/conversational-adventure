@@ -513,6 +513,124 @@ class PerfectMemorySystem:
             "memory_integrity": "perfect"  # Siempre perfecto con este sistema
         }
     
+    async def get_events_by_actor(self, actor: str, limit: int = 10) -> List[GameEvent]:
+        """Obtiene los eventos más recientes de un actor específico"""
+        cursor = self.db_connection.execute("""
+            SELECT * FROM game_events 
+            WHERE actor = ? 
+            ORDER BY timestamp DESC 
+            LIMIT ?
+        """, (actor, limit))
+        
+        events = []
+        for row in cursor.fetchall():
+            event_data = {
+                'id': row[0],
+                'timestamp': datetime.fromisoformat(row[1]),
+                'event_type': row[2],
+                'actor': row[3],
+                'action': row[4],
+                'target': row[5],
+                'location_id': row[6],
+                'context': json.loads(row[7] or '{}'),
+                'embedding_vector': json.loads(row[8] or '[]') if row[8] else None
+            }
+            events.append(GameEvent(**event_data))
+        
+        return events
+    
+    async def get_recent_events(self, location_id: str = None, limit: int = 10) -> List[GameEvent]:
+        """Obtiene los eventos más recientes, opcionalmente filtrados por ubicación"""
+        if location_id:
+            cursor = self.db_connection.execute("""
+                SELECT * FROM game_events 
+                WHERE location_id = ? 
+                ORDER BY timestamp DESC 
+                LIMIT ?
+            """, (location_id, limit))
+        else:
+            cursor = self.db_connection.execute("""
+                SELECT * FROM game_events 
+                ORDER BY timestamp DESC 
+                LIMIT ?
+            """, (limit,))
+        
+        events = []
+        for row in cursor.fetchall():
+            event_data = {
+                'id': row[0],
+                'timestamp': datetime.fromisoformat(row[1]),
+                'event_type': row[2],
+                'actor': row[3],
+                'action': row[4],
+                'target': row[5],
+                'location_id': row[6],
+                'context': json.loads(row[7] or '{}'),
+                'embedding_vector': json.loads(row[8] or '[]') if row[8] else None
+            }
+            events.append(GameEvent(**event_data))
+        
+        return events
+    
+    async def add_event(self, event: GameEvent):
+        """Añade un evento al historial"""
+        self.db_connection.execute("""
+            INSERT INTO game_events 
+            (id, timestamp, event_type, actor, action, target, location_id, context, embedding_vector)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            event.id,
+            event.timestamp.isoformat(),
+            event.event_type,
+            event.actor,
+            event.action,
+            event.target,
+            event.location_id,
+            json.dumps(event.context),
+            json.dumps(event.embedding_vector) if event.embedding_vector else None
+        ))
+        logger.info(f"✅ Evento añadido: {event.event_type} por {event.actor}")
+    
+    async def get_location_info(self, location_id: str) -> Dict[str, Any]:
+        """Obtiene información completa de una ubicación incluyendo objetos"""
+        # Obtener información de la ubicación
+        location = await self.get_location(location_id)
+        if not location:
+            return {"error": f"Location {location_id} not found"}
+        
+        # Obtener objetos en la ubicación
+        objects = await self.get_objects_in_location(location_id)
+        
+        # Obtener eventos recientes en la ubicación
+        recent_events = await self.get_recent_events(location_id, limit=5)
+        
+        return {
+            "location": {
+                "id": location.id,
+                "name": location.name,
+                "description": location.description,
+                "connections": location.connections,
+                "properties": location.properties
+            },
+            "objects": [
+                {
+                    "id": obj.id,
+                    "name": obj.name,
+                    "description": obj.description,
+                    "properties": obj.properties
+                }
+                for obj in objects
+            ],
+            "recent_events": [
+                {
+                    "action": event.action,
+                    "actor": event.actor,
+                    "timestamp": event.timestamp.isoformat()
+                }
+                for event in recent_events
+            ]
+        }
+    
     def close(self):
         """Cierra la conexión a la base de datos"""
         if self.db_connection:
