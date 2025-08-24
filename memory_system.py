@@ -98,6 +98,9 @@ class PerfectMemorySystem:
             isolation_level=None  # Autocommit mode
         )
         
+        # Configurar row_factory para obtener diccionarios
+        self.db_connection.row_factory = sqlite3.Row
+        
         # Habilitar WAL mode para mejor concurrencia
         self.db_connection.execute("PRAGMA journal_mode=WAL")
         self.db_connection.execute("PRAGMA synchronous=NORMAL")
@@ -508,6 +511,70 @@ class PerfectMemorySystem:
         if self.db_connection:
             self.db_connection.close()
             logger.info("🔒 Conexión a base de datos cerrada")
+    
+    async def get_all_locations(self) -> List[Location]:
+        """Obtiene todas las ubicaciones del mundo"""
+        cursor = self.db_connection.execute(
+            "SELECT * FROM locations ORDER BY created_at"
+        )
+        
+        locations = []
+        for row in cursor.fetchall():
+            location_data = dict(row)
+            location_data['connections'] = json.loads(location_data['connections'] or '{}')
+            location_data['properties'] = json.loads(location_data['properties'] or '{}')
+            location_data['created_at'] = datetime.fromisoformat(location_data['created_at'])
+            location_data['last_modified'] = datetime.fromisoformat(location_data['last_modified'])
+            locations.append(Location(**location_data))
+        
+        return locations
+    
+    async def get_location(self, location_id: str) -> Optional[Location]:
+        """Obtiene una ubicación específica por ID"""
+        cursor = self.db_connection.execute(
+            "SELECT * FROM locations WHERE id = ?",
+            (location_id,)
+        )
+        
+        row = cursor.fetchone()
+        if not row:
+            return None
+        
+        location_data = dict(row)
+        location_data['connections'] = json.loads(location_data['connections'] or '{}')
+        location_data['properties'] = json.loads(location_data['properties'] or '{}')
+        location_data['created_at'] = datetime.fromisoformat(location_data['created_at'])
+        location_data['last_modified'] = datetime.fromisoformat(location_data['last_modified'])
+        
+        return Location(**location_data)
+    
+    async def update_location_connections(self, location_id: str, connections: Dict[str, str]) -> bool:
+        """Actualiza las conexiones de una ubicación"""
+        now = datetime.now(timezone.utc)
+        
+        try:
+            self.db_connection.execute("""
+                UPDATE locations 
+                SET connections = ?, last_modified = ?
+                WHERE id = ?
+            """, (json.dumps(connections), now.isoformat(), location_id))
+            
+            # Registrar evento
+            await self._record_event(
+                event_type="location_updated",
+                actor="system",
+                action=f"updated location connections",
+                target=location_id,
+                location_id=location_id,
+                context={"connections": connections}
+            )
+            
+            logger.info(f"✅ Conexiones actualizadas para ubicación {location_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Error actualizando conexiones: {e}")
+            return False
 
 # Ejemplo de uso y testing
 async def test_perfect_memory():

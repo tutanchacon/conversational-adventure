@@ -51,6 +51,14 @@ except ImportError:
     MCP_AVAILABLE = False
     EnhancedMCPProvider = None
 
+try:
+    from multiplayer.websocket_handler import websocket_manager, websocket_endpoint
+    from multiplayer.multiplayer_game import get_multiplayer_game
+    MULTIPLAYER_AVAILABLE = True
+except ImportError:
+    MULTIPLAYER_AVAILABLE = False
+    websocket_manager = websocket_endpoint = get_multiplayer_game = None
+
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -123,7 +131,7 @@ class SystemManager:
             # Inicializar sistema de memoria si está disponible
             if MEMORY_AVAILABLE:
                 self.memory_system = PerfectMemorySystem()
-                await self.memory_system.initialize()
+                # El PerfectMemorySystem se inicializa automáticamente en __init__
                 logger.info("✅ Sistema de memoria inicializado")
             else:
                 logger.warning("⚠️ Sistema de memoria no disponible")
@@ -134,6 +142,18 @@ class SystemManager:
                 logger.info("✅ MCP Provider inicializado")
             else:
                 logger.warning("⚠️ MCP Provider no disponible")
+            
+            # Inicializar sistema multi-jugador si está disponible
+            if MULTIPLAYER_AVAILABLE and self.memory_system:
+                try:
+                    multiplayer_game = get_multiplayer_game()
+                    await multiplayer_game.initialize_world()
+                    logger.info("✅ Sistema multi-jugador inicializado")
+                except Exception as e:
+                    logger.warning(f"⚠️ Error inicializando multi-jugador: {e}")
+                    logger.warning("⚠️ Continuando sin sistema multi-jugador")
+            else:
+                logger.warning("⚠️ Sistema multi-jugador no disponible")
             
             logger.info("✅ Sistema inicializado correctamente")
             
@@ -168,7 +188,9 @@ class SystemManager:
             # Métricas de memoria si está disponible
             if self.memory_system:
                 try:
-                    events_count = await self.memory_system.get_events_count()
+                    # Contar eventos directamente de la base de datos
+                    cursor = self.memory_system.db_connection.execute("SELECT COUNT(*) FROM game_events")
+                    events_count = cursor.fetchone()[0]
                     metrics["events_count"] = events_count
                 except:
                     metrics["events_count"] = 0
@@ -182,6 +204,14 @@ class SystemManager:
                 except:
                     metrics["total_backups"] = 0
                     metrics["last_backup"] = None
+            
+            # Métricas multi-jugador si está disponible
+            if MULTIPLAYER_AVAILABLE and websocket_manager:
+                try:
+                    multiplayer_stats = websocket_manager.get_connection_stats()
+                    metrics["multiplayer"] = multiplayer_stats
+                except:
+                    metrics["multiplayer"] = {"error": "No disponible"}
             
             return metrics
             
@@ -364,7 +394,13 @@ async def get_events(
         raise HTTPException(status_code=503, detail="Sistema de memoria no disponible")
     
     try:
-        events = await system_manager.memory_system.get_recent_events(limit)
+        # Obtener eventos directamente de la base de datos
+        cursor = system_manager.memory_system.db_connection.execute(
+            "SELECT * FROM game_events ORDER BY timestamp DESC LIMIT ? OFFSET ?",
+            (limit, offset)
+        )
+        events = [dict(row) for row in cursor.fetchall()]
+        
         return {
             "events": events,
             "limit": limit,
@@ -373,6 +409,78 @@ async def get_events(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
+# ENDPOINTS MULTI-JUGADOR
+# ============================================================================
+
+@app.get("/api/multiplayer/status")
+async def get_multiplayer_status(current_user: dict = Depends(get_current_user)):
+    """Estado del sistema multi-jugador"""
+    if not MULTIPLAYER_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Sistema multi-jugador no disponible")
+    
+    return websocket_manager.get_connection_stats()
+
+@app.get("/api/multiplayer/players")
+async def get_active_players(current_user: dict = Depends(get_current_user)):
+    """Lista de jugadores activos"""
+    if not MULTIPLAYER_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Sistema multi-jugador no disponible")
+    
+    multiplayer_game = get_multiplayer_game()
+    players = multiplayer_game.session_manager.get_all_players()
+    
+    return {
+        "players": [player.to_dict() for player in players],
+        "total": len(players),
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.post("/api/multiplayer/broadcast")
+async def broadcast_message(
+    message: str,
+    message_type: str = "admin_announcement",
+    current_user: dict = Depends(get_current_user)
+):
+    """Envía mensaje broadcast a todos los jugadores"""
+    if not MULTIPLAYER_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Sistema multi-jugador no disponible")
+    
+    broadcast_data = {
+        "type": message_type,
+        "message": message,
+        "from": "admin",
+        "timestamp": datetime.now().isoformat()
+    }
+    
+    await websocket_manager.broadcast_to_all(broadcast_data)
+    
+    return {"success": True, "message": "Mensaje enviado a todos los jugadores"}
+
+@app.delete("/api/multiplayer/players/{player_id}")
+async def disconnect_player(
+    player_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Desconecta un jugador específico"""
+    if not MULTIPLAYER_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Sistema multi-jugador no disponible")
+    
+    try:
+        await websocket_manager.disconnect_player(player_id)
+        return {"success": True, "message": f"Jugador {player_id} desconectado"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.websocket("/ws/multiplayer")
+async def websocket_multiplayer_endpoint(websocket: WebSocket):
+    """WebSocket principal para multi-jugador"""
+    if not MULTIPLAYER_AVAILABLE:
+        await websocket.close(code=4503, reason="Sistema multi-jugador no disponible")
+        return
+    
+    await websocket_endpoint(websocket)
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
