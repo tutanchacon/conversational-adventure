@@ -87,6 +87,13 @@ class PerfectMemorySystem:
         self.db_path = Path(db_path)
         self.db_connection: Optional[sqlite3.Connection] = None
         self._initialize_database()
+    
+    async def initialize(self):
+        """Método asíncrono para inicializar el sistema (compatibilidad con AI integration)"""
+        if self.db_connection is None:
+            self._initialize_database()
+        logger.info("✅ PerfectMemorySystem inicializado")
+        return True
         
     def _initialize_database(self):
         """Inicializa la base de datos con todas las tablas necesarias"""

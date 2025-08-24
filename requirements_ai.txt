@@ -1,0 +1,113 @@
+# 🧠 ADVENTURE GAME v3.0 - AI ENHANCED REQUIREMENTS
+# Dependencias para las características avanzadas de IA
+
+# ===== CORE AI DEPENDENCIES =====
+openai>=1.0.0                    # OpenAI GPT-4 integration
+anthropic>=0.8.0                 # Claude API (alternativa)
+chromadb>=0.4.0                  # Enhanced vector database
+numpy>=1.24.0                    # Numerical computations
+scipy>=1.10.0                    # Scientific computing
+
+# ===== NATURAL LANGUAGE PROCESSING =====
+spacy>=3.7.0                     # Advanced NLP
+transformers>=4.30.0             # Hugging Face models
+torch>=2.0.0                     # PyTorch for ML models
+sentence-transformers>=2.2.0     # Semantic embeddings
+nltk>=3.8.0                      # Natural language toolkit
+
+# ===== VOICE AI =====
+openai-whisper>=20231117         # Speech-to-Text
+pydub>=0.25.0                    # Audio processing
+pyaudio>=0.2.11                  # Audio I/O
+speech-recognition>=3.10.0       # Voice input
+elevenlabs>=0.2.0                # Text-to-Speech (premium)
+
+# ===== VISUAL AI =====
+Pillow>=10.0.0                   # Image processing
+matplotlib>=3.7.0                # Plotting and visualization
+plotly>=5.15.0                   # Interactive visualizations
+opencv-python>=4.8.0             # Computer vision (opcional)
+
+# ===== MACHINE LEARNING =====
+scikit-learn>=1.3.0              # ML utilities
+pandas>=2.0.0                    # Data analysis
+joblib>=1.3.0                    # Model persistence
+xgboost>=1.7.0                   # Gradient boosting (opcional)
+
+# ===== WEB AI INTERFACE =====
+streamlit>=1.25.0                # Rapid AI prototyping
+gradio>=3.40.0                   # AI interface builder
+dash>=2.12.0                     # Interactive dashboards
+
+# ===== ENHANCED BACKEND =====
+fastapi>=0.103.0                 # API framework
+uvicorn[standard]>=0.23.0        # ASGI server
+websockets>=11.0.0               # Real-time communication
+celery>=5.3.0                    # Background tasks
+redis>=4.6.0                     # Message broker
+
+# ===== DATABASE & STORAGE =====
+sqlalchemy>=2.0.0                # Enhanced ORM
+alembic>=1.12.0                  # Database migrations
+chromadb>=0.4.0                  # Vector storage
+faiss-cpu>=1.7.4                 # Facebook AI similarity search
+
+# ===== MONITORING & ANALYTICS =====
+prometheus-client>=0.17.0        # Metrics collection
+psutil>=5.9.0                    # System monitoring
+loguru>=0.7.0                    # Enhanced logging
+
+# ===== UTILITIES =====
+python-dotenv>=1.0.0             # Environment variables
+pydantic>=2.0.0                  # Data validation
+typer>=0.9.0                     # CLI interface
+rich>=13.5.0                     # Rich terminal output
+tqdm>=4.65.0                     # Progress bars
+
+# ===== TESTING & DEVELOPMENT =====
+pytest>=7.4.0                    # Testing framework
+pytest-asyncio>=0.21.0           # Async testing
+black>=23.7.0                    # Code formatting
+flake8>=6.0.0                    # Linting
+mypy>=1.5.0                      # Type checking
+
+# ===== OPTIONAL ADVANCED FEATURES =====
+# langchain>=0.0.200              # LLM framework (si se necesita)
+# llama-index>=0.8.0              # Data framework for LLMs
+# pinecone-client>=2.2.0          # Pinecone vector DB (cloud)
+# weaviate-client>=3.22.0         # Weaviate vector DB
+# qdrant-client>=1.4.0            # Qdrant vector DB
+
+# ===== ORIGINAL REQUIREMENTS (MANTENER) =====
+asyncio-mqtt>=0.13.0
+requests>=2.31.0
+aiofiles>=23.1.0
+python-multipart>=0.0.6
+bcrypt>=4.0.1
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+
+# ===== FRONTEND REQUIREMENTS =====
+# Las dependencias de React se manejan por separado en package.json
+# Estas son para el backend Python que sirve el frontend
+
+# ===== PRODUCTION DEPLOYMENT =====
+gunicorn>=21.0.0                 # Production WSGI server
+docker>=6.1.0                    # Containerization
+nginx>=1.25.0                    # Reverse proxy (system package)
+
+# ===== INSTALLATION NOTES =====
+# Para instalar todas las dependencias:
+# pip install -r requirements_ai.txt
+#
+# Para modelos de spaCy:
+# python -m spacy download en_core_web_sm
+#
+# Para usar voice features, instalar también:
+# - PortAudio (sistema)
+# - FFmpeg (sistema)
+#
+# Variables de entorno necesarias:
+# OPENAI_API_KEY=your_openai_key
+# ELEVENLABS_API_KEY=your_elevenlabs_key (opcional)
+# ANTHROPIC_API_KEY=your_claude_key (opcional)
