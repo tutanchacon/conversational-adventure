@@ -348,16 +348,32 @@ async def websocket_endpoint(websocket: WebSocket):
             data = await websocket.receive_text()
             message = json.loads(data)
             
-            # Procesar mensaje
-            response = await websocket_manager.process_player_message(websocket_id, message)
+            message_type = message.get("type", "")
             
-            # Enviar respuesta
-            await websocket_manager.send_personal_message(websocket, {
-                "type": "response",
-                "original_message": message,
-                "response": response,
-                "timestamp": datetime.now().isoformat()
-            })
+            # Manejar autenticación por separado
+            if message_type == "authenticate":
+                username = message.get("player_name", "")
+                session_id = message.get("session_id", "")
+                
+                response = await websocket_manager.authenticate_player(
+                    websocket, websocket_id, username, session_id
+                )
+                
+                await websocket_manager.send_personal_message(websocket, {
+                    "type": "authentication_response",
+                    "response": response,
+                    "timestamp": datetime.now().isoformat()
+                })
+            else:
+                # Procesar otros mensajes (requiere autenticación)
+                response = await websocket_manager.process_player_message(websocket_id, message)
+                
+                await websocket_manager.send_personal_message(websocket, {
+                    "type": "response",
+                    "original_message": message,
+                    "response": response,
+                    "timestamp": datetime.now().isoformat()
+                })
             
     except WebSocketDisconnect:
         await websocket_manager.disconnect(websocket_id)

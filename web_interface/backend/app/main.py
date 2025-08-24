@@ -27,7 +27,7 @@ import sys
 from pathlib import Path
 
 # Agregar el directorio raíz al path para importar nuestros módulos
-root_dir = Path(__file__).parent.parent.parent
+root_dir = Path(__file__).parent.parent.parent.parent  # Subir 4 niveles: app -> backend -> web_interface -> conversational-adventure
 sys.path.insert(0, str(root_dir))
 
 try:
@@ -480,10 +480,12 @@ async def websocket_multiplayer_endpoint(websocket: WebSocket):
         await websocket.close(code=4503, reason="Sistema multi-jugador no disponible")
         return
     
-    await websocket_endpoint(websocket)
+    # Llamar a la función del módulo multiplayer, no la local
+    from multiplayer.websocket_handler import websocket_endpoint as multiplayer_websocket_endpoint
+    await multiplayer_websocket_endpoint(websocket)
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_general_endpoint(websocket: WebSocket):
     """WebSocket para comunicación en tiempo real"""
     await system_manager.websocket_manager.connect(websocket)
     try:
