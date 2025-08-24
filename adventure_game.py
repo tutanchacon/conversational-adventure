@@ -1,5 +1,5 @@
 
-# Adventure Game con Sistema de Memoria Perfecta, MCP y Vector Search v1.1.0
+# Adventure Game con Sistema de Memoria Perfecta, MCP, Vector Search y Web Interface v2.0.0
 import asyncio
 import json
 import aiohttp
