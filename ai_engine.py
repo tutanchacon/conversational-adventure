@@ -31,6 +31,15 @@ class AIPersonality(Enum):
     SCHOLARLY = "scholarly"
     ADVENTUROUS = "adventurous"
 
+class AILanguage(Enum):
+    """Idiomas soportados por el sistema AI"""
+    SPANISH = "es"
+    ENGLISH = "en"
+    FRENCH = "fr"
+    PORTUGUESE = "pt"
+    ITALIAN = "it"
+    GERMAN = "de"
+
 @dataclass
 class AIContext:
     """Contexto completo para la IA"""
@@ -42,6 +51,7 @@ class AIContext:
     conversation_history: List[Dict]
     world_state: Dict[str, Any]
     player_preferences: Dict[str, Any]
+    language: AILanguage = AILanguage.SPANISH  # Idioma por defecto
 
 @dataclass
 class AIResponse:
@@ -315,28 +325,31 @@ class SmartNarrator:
             return self._fallback_response(user_input)
     
     def _build_contextual_prompt(self, context: AIContext, user_input: str) -> str:
-        """Construir prompt con contexto completo"""
+        """Construir prompt con contexto completo y soporte multilingüe"""
         
-        personality_traits = {
-            AIPersonality.MYSTERIOUS: "mysterious, enigmatic, speaks in riddles",
-            AIPersonality.FRIENDLY: "warm, helpful, encouraging",
-            AIPersonality.DRAMATIC: "theatrical, passionate, emotionally intense", 
-            AIPersonality.HUMOROUS: "witty, playful, finds humor in situations",
-            AIPersonality.SCHOLARLY: "knowledgeable, precise, educational",
-            AIPersonality.ADVENTUROUS: "bold, exciting, action-oriented"
-        }
+        # Importar sistema de traducciones
+        from translations import translation_system
+        
+        # Obtener traits de personalidad en el idioma correcto
+        personality_traits = translation_system.get_personality_traits(context.language)
+        
+        # Obtener instrucciones de idioma
+        language_instructions = translation_system.get_language_instructions(context.language)
         
         # Formatear world_state de manera segura
         world_state_str = str(context.world_state) if context.world_state else "Empty world state"
         
         prompt = f"""You are an AI narrator for an adventure game with perfect memory. 
 
-PERSONALITY: {personality_traits[self.personality]}
+LANGUAGE: {language_instructions}
+
+PERSONALITY: {personality_traits.get(self.personality.value, personality_traits["friendly"])}
 
 CURRENT CONTEXT:
 - Location: {context.current_location}
 - Player mood: {context.player_mood}
 - Narrative state: {context.narrative_state}
+- Language: {context.language.value}
 
 RECENT EVENTS:
 {self._format_events(context.recent_events)}
@@ -350,12 +363,13 @@ WORLD STATE:
 PLAYER INPUT: "{user_input}"
 
 INSTRUCTIONS:
-1. Respond in character as the narrator
-2. Use relevant memories to maintain continuity
-3. Be contextually aware of the player's situation
-4. Generate vivid, immersive descriptions
-5. Maintain narrative coherence
-6. Suggest 2-3 possible actions
+1. {language_instructions}
+2. Respond in character as the narrator with the specified personality
+3. Use relevant memories to maintain continuity
+4. Be contextually aware of the player's situation
+5. Generate vivid, immersive descriptions in the target language
+6. Maintain narrative coherence
+7. Suggest 2-3 possible actions in the target language
 
 RESPONSE FORMAT:
 Please respond with a simple narrative text. Keep it immersive and engaging.
@@ -574,6 +588,10 @@ class AIEngine:
         self.narrator = SmartNarrator(ollama_host)
         self.predictor = PredictiveEngine(memory_system)
         
+        # Configuración multilingüe
+        self.current_language = AILanguage.SPANISH
+        self.supported_languages = list(AILanguage)
+        
         # Estado del motor
         self.active_contexts = {}
         self.processing_stats = {
@@ -584,8 +602,21 @@ class AIEngine:
         
         logger.info("🧠 AI Engine Core initialized successfully")
     
+    def set_language(self, language: AILanguage):
+        """Cambiar idioma del sistema"""
+        self.current_language = language
+        logger.info(f"🌍 Language changed to: {language.value}")
+    
+    def get_language(self) -> AILanguage:
+        """Obtener idioma actual"""
+        return self.current_language
+    
+    def get_supported_languages(self) -> List[AILanguage]:
+        """Obtener lista de idiomas soportados"""
+        return self.supported_languages
+    
     async def process_player_input(self, player_id: str, input_text: str, 
-                                 location_id: str) -> AIResponse:
+                                 location_id: str, language: AILanguage = None) -> AIResponse:
         """Procesar entrada del jugador con IA completa"""
         
         start_time = datetime.now()
@@ -615,7 +646,8 @@ class AIEngine:
                 narrative_state="active",
                 conversation_history=self.active_contexts.get(player_id, []),
                 world_state=await self._get_world_state(location_id),
-                player_preferences=player_analysis
+                player_preferences=player_analysis,
+                language=language or self.current_language  # Usar idioma especificado o actual
             )
             
             # 6. Generar respuesta inteligente

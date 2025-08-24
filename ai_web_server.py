@@ -688,6 +688,87 @@ async def get_status():
             "ai_stats": ai_stats,
             "timestamp": datetime.now().isoformat()
         }
+    except Exception as e:
+        logger.error(f"❌ Error getting status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/languages")
+async def get_languages():
+    """Obtener idiomas soportados"""
+    try:
+        from translations import translation_system
+        from ai_engine import AILanguage
+        
+        languages = []
+        for lang in AILanguage:
+            languages.append({
+                "code": lang.value,
+                "name": translation_system.get_text(f"language_{lang.name.lower()}", lang),
+                "native_name": translation_system.get_text(f"language_{lang.name.lower()}", lang)
+            })
+        
+        return {
+            "languages": languages,
+            "current": ai_game.ai_engine.get_language().value if ai_game else "es"
+        }
+    except Exception as e:
+        logger.error(f"❌ Error getting languages: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/language")
+async def set_language(request: dict):
+    """Cambiar idioma del sistema"""
+    try:
+        from ai_engine import AILanguage
+        
+        language_code = request.get("language", "es")
+        
+        # Convertir código a enum
+        language = None
+        for lang in AILanguage:
+            if lang.value == language_code:
+                language = lang
+                break
+        
+        if not language:
+            raise HTTPException(status_code=400, detail="Idioma no soportado")
+        
+        if ai_game:
+            ai_game.ai_engine.set_language(language)
+        
+        return {
+            "success": True,
+            "language": language.value,
+            "message": f"Idioma cambiado a {language.value}"
+        }
+    except Exception as e:
+        logger.error(f"❌ Error setting language: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/personalities")
+async def get_personalities():
+    """Obtener personalidades disponibles"""
+    try:
+        from translations import translation_system
+        from ai_engine import AIPersonality, AILanguage
+        
+        current_language = ai_game.ai_engine.get_language() if ai_game else AILanguage.SPANISH
+        
+        personalities = []
+        for personality in AIPersonality:
+            personalities.append({
+                "id": personality.value,
+                "name": translation_system.get_text(f"personality_{personality.value}", current_language),
+                "description": translation_system.get_personality_traits(current_language)[personality.value]
+            })
+        
+        return {
+            "personalities": personalities,
+            "current": ai_game.ai_engine.narrator.personality.value if ai_game else "friendly"
+        }
+    except Exception as e:
+        logger.error(f"❌ Error getting personalities: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
         
     except Exception as e:
         logger.error(f"❌ Error getting status: {e}")

@@ -34,10 +34,21 @@ class AIAdventureGame:
         self.ai_engine = None
         
         # Configuración de IA con Ollama
+        from ai_engine import AILanguage
+        
+        # Mapear código de idioma a enum
+        default_lang_code = os.getenv("AI_DEFAULT_LANGUAGE", "es")
+        default_language = AILanguage.SPANISH  # fallback
+        for lang in AILanguage:
+            if lang.value == default_lang_code:
+                default_language = lang
+                break
+        
         self.ai_config = {
             "ollama_host": os.getenv("OLLAMA_HOST", "http://localhost:11434"),
             "ollama_model": os.getenv("OLLAMA_MODEL", "llama3.2:latest"),
             "personality": AIPersonality.FRIENDLY,
+            "default_language": default_language,
             "enable_voice": False,
             "enable_predictions": True,
             "enable_content_generation": True
@@ -75,10 +86,11 @@ class AIAdventureGame:
                 ollama_host
             )
             
-            # 5. Configurar personalidad
+            # 5. Configurar personalidad e idioma por defecto
             self.ai_engine.narrator.personality = self.ai_config["personality"]
+            self.ai_engine.set_language(self.ai_config["default_language"])
             
-            logger.info("✅ AI Adventure Game ready!")
+            logger.info(f"✅ AI Adventure Game ready! Language: {self.ai_config['default_language'].value}")
             return True
             
         except Exception as e:
