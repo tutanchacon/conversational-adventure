@@ -7,7 +7,7 @@ Un sistema de aventura conversacional de última generación que combina **Intel
 ### 📊 **Arquitectura del Sistema**
 
 ```
-🧠 Adventure Game v3.0 - AI ENHANCED + MULTILINGUAL
+🧠 Adventure Game v3.0 - AI ENHANCED + MULTILINGUAL + MCP EDITOR
 ├── 🎯 FASE 1 - Perfect Memory System (COMPLETADO ✅)
 │   ├── 📊 SQLite Database con Event Sourcing
 │   ├── 🔍 Vector Search con ChromaDB
@@ -27,25 +27,41 @@ Un sistema de aventura conversacional de última generación que combina **Intel
 │       ├── 🔄 WebSocket live updates
 │       └── 🗂️ Gestión visual de backups
 │
-└── 🧠 FASE 3 - AI Enhancement + Multilingual (COMPLETADO ✅)
-    ├── 🤖 AI Engine Avanzado
-    │   ├── 🔍 RAG (Retrieval-Augmented Generation)
-    │   ├── 🔤 Procesamiento NLP con spaCy
-    │   ├── 🎭 Smart Narrator multi-personalidad
-    │   ├── 🔮 Motor predictivo inteligente
-    │   └── 💾 Sistema de memoria perfecta
-    ├── 🦙 Ollama Integration
-    │   ├── 🏠 IA local con Llama 3.2
-    │   ├── ⚡ Sin dependencia de APIs externas
-    │   ├── 🔒 Privacidad total
-    │   └── 🚀 Rendimiento optimizado
-    └── 🌍 Sistema Multilingüe
-        ├── 🇪🇸 Español (por defecto)
-        ├── 🇺🇸 English
-        ├── 🇫🇷 Français
-        ├── 🇵🇹 Português
-        ├── 🇮🇹 Italiano
-        └── 🇩🇪 Deutsch
+├── 🧠 FASE 3 - AI Enhancement + Multilingual (COMPLETADO ✅)
+│   ├── 🤖 AI Engine Avanzado
+│   │   ├── 🔍 RAG (Retrieval-Augmented Generation)
+│   │   ├── 🔤 Procesamiento NLP con spaCy
+│   │   ├── 🎭 Smart Narrator multi-personalidad
+│   │   ├── 🔮 Motor predictivo inteligente
+│   │   └── 💾 Sistema de memoria perfecta
+│   ├── 🦙 Ollama Integration
+│   │   ├── 🏠 IA local con Llama 3.2
+│   │   ├── ⚡ Sin dependencia de APIs externas
+│   │   ├── 🔒 Privacidad total
+│   │   └── 🚀 Rendimiento optimizado
+│   └── 🌍 Sistema Multilingüe
+│       ├── 🇪🇸 Español (por defecto)
+│       ├── 🇺🇸 English
+│       ├── 🇫🇷 Français
+│       ├── 🇵🇹 Português
+│       ├── 🇮🇹 Italiano
+│       └── 🇩🇪 Deutsch
+│
+└── 🌍 FASE 4 - MCP World Editor (NUEVO ✅)
+    ├── 🛠️ Sistema de Creación Estandarizada
+    │   ├── 📋 Templates inteligentes con validación MCP
+    │   ├── 🎨 Presets temáticos (forest, dungeon, castle, shop)
+    │   ├── 📦 Objetos tipificados (weapon, tool, treasure, furniture)
+    │   └── ⚡ Sistema de eventos con triggers automáticos
+    ├── 🔧 Herramientas de Desarrollo
+    │   ├── 💾 Import/Export JSON completo
+    │   ├── 🔍 Validación con contexto MCP
+    │   ├── 🧠 Integración total con IA
+    │   └── 📊 Vista general del mundo
+    └── 🎮 Ejemplos Funcionales
+        ├── 🏰 create_fantasy_castle.py (demostración completa)
+        ├── 🌟 mcp_world_editor.py (editor principal)
+        └── 📋 Templates reutilizables en JSON
 ```
 
 ## 🎯 **CARACTERÍSTICAS PRINCIPALES**
@@ -69,6 +85,15 @@ Un sistema de aventura conversacional de última generación que combina **Intel
 - **Búsqueda Semántica**: "busca algo útil para abrir puertas"
 - **Interfaz Web**: Juega desde cualquier navegador
 - **Real-time**: Updates instantáneos vía WebSocket
+
+### 🌍 **MCP World Editor - NUEVO**
+- **🛠️ Creación Estandarizada**: Sistema unificado para crear lugares, objetos y eventos
+- **📋 Templates Inteligentes**: Validación automática con contexto MCP
+- **🎨 Presets Temáticos**: Bosque, mazmorra, castillo, tienda + arma, herramienta, tesoro
+- **⚡ Sistema de Eventos**: Triggers automáticos (entrada, uso de objeto, comandos, tiempo)
+- **💾 Import/Export JSON**: Backup y reutilización de contenido
+- **🧠 Integración IA**: El contenido creado es perfectamente entendido por la IA
+- **🔍 Contexto MCP**: Aprovecha el protocolo existente para coherencia narrativa
 
 ## 🚀 **QUICK START**
 
@@ -121,7 +146,45 @@ python ai_web_server.py
 # Abrir navegador: http://localhost:8091
 ```
 
-### **5. Ejecutar Web Interface v2.0 (Opcional)**
+### **4. Ejecutar Sistema AI v3.0**
+```bash
+# Opción A: Script automático
+python start_ai_game.py
+
+# Opción B: Servidor directo  
+python ai_web_server.py
+
+# Abrir navegador: http://localhost:8091
+```
+
+### **5. Crear Contenido con MCP World Editor (NUEVO)**
+```bash
+# Crear castillo de fantasía de ejemplo
+python create_fantasy_castle.py
+
+# Usar editor MCP para contenido personalizado
+python mcp_world_editor.py
+
+# Ejemplo programático:
+from mcp_world_editor import MCPWorldEditor, quick_location, quick_object
+
+# Crear ubicación
+forest = quick_location(
+    name="Bosque Encantado",
+    description="Un misterioso bosque mágico...",
+    theme="forest"
+)
+
+# Crear objeto  
+sword = quick_object(
+    name="Espada Élfica",
+    description="Una espada con runas brillantes...",
+    location_id=forest_id,
+    object_type="weapon"
+)
+```
+
+### **6. Ejecutar Web Interface v2.0 (Opcional)**
 ```bash
 # En terminal separada
 .\start_complete_system.bat
@@ -141,6 +204,72 @@ examinar la habitación cuidadosamente
 buscar objetos útiles
 tomar la espada
 hablar con el personaje
+```
+
+### **🌍 Crear Tu Propio Mundo - MCP World Editor**
+```python
+# Ejemplo completo de creación de contenido
+from mcp_world_editor import MCPWorldEditor, quick_location, quick_object, quick_event
+
+async def crear_mi_aventura():
+    editor = MCPWorldEditor("adventure_world.db")
+    await editor.initialize()
+    
+    # 🏛️ Crear ubicación
+    location = quick_location(
+        name="Torre Misteriosa",
+        description="Una alta torre de piedra envuelta en niebla...",
+        theme="castle",
+        connections={"abajo": "entrada"},
+        atmosphere="misterioso y antiguo"
+    )
+    success, location_id = await editor.create_location_with_mcp(location)
+    
+    # 📦 Crear objeto mágico
+    artifact = quick_object(
+        name="Orbe de Cristal",
+        description="Un orbe que pulsa con energía mágica...",
+        location_id=location_id,
+        object_type="treasure"
+    )
+    artifact.properties = {"magical": True, "power": 100}
+    artifact.ai_context = "Artefacto mágico que revela secretos ocultos"
+    success, object_id = await editor.create_object_with_mcp(artifact)
+    
+    # ⚡ Crear evento de activación
+    event = quick_event(
+        name="Activación del Orbe",
+        description="Se activa al tocar el orbe",
+        trigger_type="object_use",
+        trigger_condition=object_id,
+        action_type="message",
+        action_data={
+            "message": "El orbe se ilumina y revela un mapa secreto en las paredes...",
+            "effect": "reveal_secret_map"
+        }
+    )
+    await editor.create_event_with_mcp(event)
+    
+    # 💾 Exportar todo
+    await editor.export_templates_to_json("mi_aventura.json")
+    editor.close()
+
+# Ejecutar
+import asyncio
+asyncio.run(crear_mi_aventura())
+```
+
+### **📋 Templates Predefinidos**
+```python
+# Ubicaciones temáticas
+themes = ["forest", "dungeon", "castle", "shop"]
+
+# Objetos por tipo  
+types = ["weapon", "tool", "treasure", "furniture"]
+
+# Eventos disponibles
+triggers = ["location_enter", "object_use", "command", "time"]
+actions = ["message", "spawn_object", "modify_object", "change_location"]
 ```
 
 ### **Cambiar Idioma (API)**
@@ -203,6 +332,23 @@ GET  /api/ai/insights      # Estadísticas AI
 POST /api/ai/generate      # Generar contenido
 ```
 
+### **MCP World Editor (Programático)**
+```python
+# Editor principal
+from mcp_world_editor import MCPWorldEditor
+
+# Funciones rápidas
+from mcp_world_editor import quick_location, quick_object, quick_event
+
+# Métodos principales
+editor.create_location_with_mcp(template)    # Crear ubicación
+editor.create_object_with_mcp(template)      # Crear objeto  
+editor.create_event_with_mcp(template)       # Crear evento
+editor.export_templates_to_json(filename)    # Exportar JSON
+editor.load_templates_from_json(filename)    # Importar JSON
+editor.get_world_overview_with_mcp()         # Vista general
+```
+
 ### **Web Interface (Puerto 8001)**
 ```
 GET  /docs                 # Swagger UI
@@ -213,6 +359,25 @@ WebSocket /ws             # Conexión tiempo real
 ```
 
 ## 🧪 **TESTING**
+
+### **Probar MCP World Editor**
+```bash
+# 1. Crear castillo de fantasía completo
+python create_fantasy_castle.py
+
+# 2. Ejecutar demo del editor
+python mcp_world_editor.py
+
+# 3. Iniciar juego con contenido nuevo
+python start_ai_game.py
+
+# 4. Probar en el navegador (puerto 8091)
+# Comandos de prueba:
+"mirar alrededor"
+"ir al norte" 
+"examinar espada élfica"
+"tomar escudo del guardián"
+```
 
 ### **Probar Multilingüe**
 ```bash
@@ -275,6 +440,8 @@ conversational-adventure/
 ├── ai_engine.py              # Motor IA principal
 ├── ai_integration.py         # Integración IA-Game
 ├── ai_web_server.py          # Servidor AI v3.0
+├── mcp_world_editor.py       # Editor MCP mundos v1.0
+├── create_fantasy_castle.py  # Ejemplo práctico MCP
 ├── translations.py           # Sistema multilingüe
 ├── memory_system.py          # Memoria perfecta
 ├── backup_system.py          # Sistema de backups
@@ -282,6 +449,7 @@ conversational-adventure/
 │   ├── backend/             # FastAPI
 │   └── frontend/            # React
 ├── vector_db/               # ChromaDB embeddings
+├── ai_enhanced_memory/       # Sistema memoria IA
 ├── requirements_ai.txt      # Dependencias IA
 └── .env                     # Configuración
 ```
@@ -292,23 +460,28 @@ conversational-adventure/
 - [x] Perfect Memory System (Fase 1)
 - [x] Web Interface Profesional (Fase 2)  
 - [x] AI Enhancement + Multilingüe (Fase 3)
+- [x] **MCP World Editor (Fase 4)** - **NUEVO ✅**
 - [x] Ollama Integration
 - [x] 6 Idiomas soportados
 - [x] Sistema de personalidades
 - [x] API completa multilingüe
+- [x] **Sistema de creación de contenido estandarizado**
+- [x] **Templates inteligentes con validación MCP**
+- [x] **Import/Export JSON completo**
 
 ### **🔄 En Desarrollo**
+- [ ] Interfaz web para MCP World Editor
 - [ ] Interfaz web para selector de idioma
 - [ ] Persistencia de preferencias de usuario
 - [ ] Modo offline completo
 - [ ] Optimizaciones CUDA/GPU
 
-### **📋 Planeado (Fase 4+)**
+### **📋 Planeado (Fase 5+)**
 - [ ] Multiplayer real-time mejorado
 - [ ] Aplicación móvil
 - [ ] Integración con más modelos LLM
 - [ ] Sistema de plugins
-- [ ] Editor de mundos visual
+- [ ] ~~Editor de mundos visual~~ **✅ MCP World Editor completado**
 - [ ] Voice interaction
 
 ## 🤝 **CONTRIBUIR**

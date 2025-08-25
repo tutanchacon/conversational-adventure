@@ -1,0 +1,162 @@
+{
+  "metadata": {
+    "exported_at": "2025-08-25T10:36:26.171568",
+    "editor_version": "1.0.0",
+    "mcp_enabled": true,
+    "total_templates": 3
+  },
+  "templates": {
+    "a23cd9c8-df1f-4a94-9070-acad0c657f31": {
+      "id": "a23cd9c8-df1f-4a94-9070-acad0c657f31",
+      "name": "Bosque de los Susurros",
+      "description": "Un bosque encantado donde los árboles parecen hablar entre ellos. La luz se filtra a través de hojas doradas creando patrones mágicos en el suelo cubierto de musgo.",
+      "created_at": "2025-08-25T10:36:26.125790",
+      "metadata": {
+        "nearby_locations": [
+          {
+            "direction": "sur",
+            "target": "entrada_castillo",
+            "objects_count": 0
+          }
+        ]
+      },
+      "connections": {
+        "sur": "entrada_castillo"
+      },
+      "properties": {
+        "nature": true,
+        "sounds": "birds_wind"
+      },
+      "atmosphere": "natural y tranquilo",
+      "lighting": "filtered",
+      "size": "medium",
+      "theme": "forest"
+    },
+    "18c442cc-675e-42e3-b1e6-a92d36d55b52": {
+      "id": "18c442cc-675e-42e3-b1e6-a92d36d55b52",
+      "name": "Seta Luminosa",
+      "description": "Una seta que brilla con luz azulada. Al tocarla, emite un suave zumbido musical.",
+      "created_at": "2025-08-25T10:36:26.171568",
+      "metadata": {
+        "location_object_count": 0
+      },
+      "location_id": "a23cd9c8-df1f-4a94-9070-acad0c657f31",
+      "properties": {
+        "light_source": true,
+        "magical": true,
+        "sound": "musical_hum"
+      },
+      "is_takeable": true,
+      "is_usable": false,
+      "is_hidden": false,
+      "keywords": [],
+      "ai_context": "Objeto mágico que puede usarse para iluminar áreas oscuras"
+    },
+    "cf31f189-895f-41c9-a50a-d9a78f69bc7e": {
+      "id": "cf31f189-895f-41c9-a50a-d9a78f69bc7e",
+      "name": "Bienvenida al Bosque",
+      "description": "Evento que se activa al entrar al bosque por primera vez",
+      "created_at": "2025-08-25T10:36:26.171568",
+      "metadata": {},
+      "trigger_type": "location_enter",
+      "trigger_condition": "a23cd9c8-df1f-4a94-9070-acad0c657f31",
+      "action_type": "message",
+      "action_data": {
+        "message": "Los árboles susurran tu nombre al entrar. Sientes que has llegado a un lugar especial.",
+        "mood": "mysterious",
+        "one_time": true
+      },
+      "is_repeatable": false,
+      "cooldown_seconds": 0
+    }
+  },
+  "presets": {
+    "locations": {
+      "forest": {
+        "atmosphere": "natural y tranquilo",
+        "lighting": "filtered",
+        "properties": {
+          "nature": true,
+          "sounds": "birds_wind"
+        }
+      },
+      "dungeon": {
+        "atmosphere": "oscuro y amenazante",
+        "lighting": "dark",
+        "properties": {
+          "dangerous": true,
+          "echo": true
+        }
+      },
+      "castle": {
+        "atmosphere": "majestuoso y antiguo",
+        "lighting": "dim",
+        "properties": {
+          "historic": true,
+          "stone_walls": true
+        }
+      },
+      "shop": {
+        "atmosphere": "acogedor y comercial",
+        "lighting": "bright",
+        "properties": {
+          "commerce": true,
+          "safe": true
+        }
+      }
+    },
+    "objects": {
+      "weapon": {
+        "properties": {
+          "damage": 10,
+          "durability": 100,
+          "type": "weapon"
+        },
+        "keywords": [
+          "arma",
+          "combate",
+          "weapon"
+        ],
+        "is_takeable": true,
+        "is_usable": true
+      },
+      "tool": {
+        "properties": {
+          "durability": 100,
+          "type": "tool"
+        },
+        "keywords": [
+          "herramienta",
+          "tool",
+          "útil"
+        ],
+        "is_takeable": true,
+        "is_usable": true
+      },
+      "treasure": {
+        "properties": {
+          "value": 100,
+          "type": "treasure"
+        },
+        "keywords": [
+          "tesoro",
+          "valioso",
+          "treasure"
+        ],
+        "is_takeable": true,
+        "is_usable": false
+      },
+      "furniture": {
+        "properties": {
+          "type": "furniture"
+        },
+        "keywords": [
+          "mueble",
+          "furniture"
+        ],
+        "is_takeable": false,
+        "is_usable": true
+      }
+    }
+  }
+}

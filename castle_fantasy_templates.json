@@ -1,0 +1,317 @@
+{
+  "metadata": {
+    "exported_at": "2025-08-25T10:38:24.838750",
+    "editor_version": "1.0.0",
+    "mcp_enabled": true,
+    "total_templates": 9
+  },
+  "templates": {
+    "3dd3b67d-7efe-4dc0-83cd-46929638f2c1": {
+      "id": "3dd3b67d-7efe-4dc0-83cd-46929638f2c1",
+      "name": "Entrada del Castillo Real",
+      "description": "Majestuosas puertas de roble reforzadas con hierro se alzan ante ti. Escudos heráldicos decoran las columnas de mármol.",
+      "created_at": "2025-08-25T10:38:24.771476",
+      "metadata": {
+        "nearby_locations": [
+          {
+            "direction": "norte",
+            "target": "hall_principal",
+            "objects_count": 0
+          },
+          {
+            "direction": "sur",
+            "target": "camino_bosque",
+            "objects_count": 0
+          },
+          {
+            "direction": "este",
+            "target": "torre_guardia",
+            "objects_count": 0
+          }
+        ]
+      },
+      "connections": {
+        "norte": "hall_principal",
+        "sur": "camino_bosque",
+        "este": "torre_guardia"
+      },
+      "properties": {
+        "historic": true,
+        "stone_walls": true
+      },
+      "atmosphere": "majestuoso y antiguo",
+      "lighting": "dim",
+      "size": "medium",
+      "theme": "castle"
+    },
+    "1102fc46-4e9d-4a74-925d-96abd20c9430": {
+      "id": "1102fc46-4e9d-4a74-925d-96abd20c9430",
+      "name": "Torre de Guardia",
+      "description": "Una alta torre circular con ventanas estrechas. Desde aquí se vigilan los caminos que llevan al castillo.",
+      "created_at": "2025-08-25T10:38:24.824242",
+      "metadata": {
+        "nearby_locations": [
+          {
+            "direction": "oeste",
+            "target": "3dd3b67d-7efe-4dc0-83cd-46929638f2c1",
+            "objects_count": 0
+          },
+          {
+            "direction": "arriba",
+            "target": "sala_armas",
+            "objects_count": 0
+          }
+        ]
+      },
+      "connections": {
+        "oeste": "3dd3b67d-7efe-4dc0-83cd-46929638f2c1",
+        "arriba": "sala_armas"
+      },
+      "properties": {
+        "historic": true,
+        "stone_walls": true
+      },
+      "atmosphere": "majestuoso y antiguo",
+      "lighting": "dim",
+      "size": "medium",
+      "theme": "castle"
+    },
+    "9c499ea2-b1f6-4baa-b41c-6f5656569a70": {
+      "id": "9c499ea2-b1f6-4baa-b41c-6f5656569a70",
+      "name": "Sala de Armas",
+      "description": "Las paredes están cubiertas de armaduras, espadas, escudos y ballestas. El aire huele a aceite de armas y cuero.",
+      "created_at": "2025-08-25T10:38:24.824242",
+      "metadata": {
+        "nearby_locations": [
+          {
+            "direction": "abajo",
+            "target": "1102fc46-4e9d-4a74-925d-96abd20c9430",
+            "objects_count": 0
+          }
+        ]
+      },
+      "connections": {
+        "abajo": "1102fc46-4e9d-4a74-925d-96abd20c9430"
+      },
+      "properties": {
+        "historic": true,
+        "stone_walls": true
+      },
+      "atmosphere": "majestuoso y antiguo",
+      "lighting": "dim",
+      "size": "medium",
+      "theme": "castle"
+    },
+    "aea44a52-5508-40c4-80b4-aaa910990297": {
+      "id": "aea44a52-5508-40c4-80b4-aaa910990297",
+      "name": "Espada Élfica Brillante",
+      "description": "Una elegante espada de hoja curva con runas élficas grabadas. La empuñadura está decorada con gemas que brillan suavemente.",
+      "created_at": "2025-08-25T10:38:24.824242",
+      "metadata": {
+        "location_object_count": 0
+      },
+      "location_id": "9c499ea2-b1f6-4baa-b41c-6f5656569a70",
+      "properties": {
+        "damage": 25,
+        "durability": 150,
+        "material": "mithril",
+        "enchantment": "light_blessing",
+        "rarity": "legendary"
+      },
+      "is_takeable": true,
+      "is_usable": false,
+      "is_hidden": false,
+      "keywords": [],
+      "ai_context": "Arma élfica antigua con bendición de luz. Efectiva contra criaturas de la oscuridad."
+    },
+    "bd78dfd8-e508-4be6-9e39-3d51e4cc2619": {
+      "id": "bd78dfd8-e508-4be6-9e39-3d51e4cc2619",
+      "name": "Escudo del Guardián Real",
+      "description": "Un sólido escudo de acero con el emblema real grabado. Muestra signos de haber visto muchas batallas.",
+      "created_at": "2025-08-25T10:38:24.824242",
+      "metadata": {
+        "location_object_count": 0
+      },
+      "location_id": "1102fc46-4e9d-4a74-925d-96abd20c9430",
+      "properties": {
+        "defense": 15,
+        "durability": 120,
+        "material": "steel",
+        "weight": 8.5,
+        "history": "royal_guard"
+      },
+      "is_takeable": true,
+      "is_usable": true,
+      "is_hidden": false,
+      "keywords": [],
+      "ai_context": "Escudo ceremonial que ofrece protección considerable. Símbolo de autoridad real."
+    },
+    "711d6808-be19-4ef0-b4e2-a5d9fb17b71f": {
+      "id": "711d6808-be19-4ef0-b4e2-a5d9fb17b71f",
+      "name": "Llave Dorada del Chambelán",
+      "description": "Una ornamentada llave de oro con el sello real. Abre las habitaciones privadas del castillo.",
+      "created_at": "2025-08-25T10:38:24.824242",
+      "metadata": {
+        "location_object_count": 0
+      },
+      "location_id": "3dd3b67d-7efe-4dc0-83cd-46929638f2c1",
+      "properties": {
+        "material": "gold",
+        "opens": [
+          "royal_chambers",
+          "treasure_room",
+          "secret_passage"
+        ],
+        "value": 500,
+        "authority_level": "high"
+      },
+      "is_takeable": true,
+      "is_usable": false,
+      "is_hidden": true,
+      "keywords": [],
+      "ai_context": "Llave maestra que abre áreas restringidas del castillo. Muy valiosa para la exploración."
+    },
+    "f1cd67cd-e332-4a01-87da-cd2d3b95e86e": {
+      "id": "f1cd67cd-e332-4a01-87da-cd2d3b95e86e",
+      "name": "Entrada Majestuosa",
+      "description": "Evento al entrar al castillo por primera vez",
+      "created_at": "2025-08-25T10:38:24.824242",
+      "metadata": {},
+      "trigger_type": "location_enter",
+      "trigger_condition": "3dd3b67d-7efe-4dc0-83cd-46929638f2c1",
+      "action_type": "message",
+      "action_data": {
+        "message": "Las enormes puertas se abren con un eco profundo. Guardias fantasma parecen observarte desde las sombras de las columnas.",
+        "mood": "majestic",
+        "sound_effect": "heavy_doors",
+        "first_time_only": true
+      },
+      "is_repeatable": false,
+      "cooldown_seconds": 0
+    },
+    "690c553a-bf3f-4b45-af65-1a05423d40fe": {
+      "id": "690c553a-bf3f-4b45-af65-1a05423d40fe",
+      "name": "Despertar de la Espada Élfica",
+      "description": "Evento al tomar la espada élfica por primera vez",
+      "created_at": "2025-08-25T10:38:24.824242",
+      "metadata": {},
+      "trigger_type": "object_use",
+      "trigger_condition": "aea44a52-5508-40c4-80b4-aaa910990297",
+      "action_type": "message",
+      "action_data": {
+        "message": "Al tomar la espada, las runas élficas brillan intensamente y sientes una corriente de poder ancestral recorrer tus brazos.",
+        "mood": "mystical",
+        "temporary_effect": "enhanced_strength",
+        "duration": 300
+      },
+      "is_repeatable": false,
+      "cooldown_seconds": 0
+    },
+    "3945d8e4-f12d-4a07-9ab1-cd248ed0ee95": {
+      "id": "3945d8e4-f12d-4a07-9ab1-cd248ed0ee95",
+      "name": "Descubrimiento de la Llave Dorada",
+      "description": "Evento al encontrar la llave oculta",
+      "created_at": "2025-08-25T10:38:24.824242",
+      "metadata": {},
+      "trigger_type": "command",
+      "trigger_condition": "buscar llave|examinar entrada|search key",
+      "action_type": "spawn_object",
+      "action_data": {
+        "object_id": "711d6808-be19-4ef0-b4e2-a5d9fb17b71f",
+        "reveal_message": "¡Al examinar cuidadosamente las columnas, encuentras una llave dorada escondida tras el escudo heráldico!",
+        "location_id": "3dd3b67d-7efe-4dc0-83cd-46929638f2c1"
+      },
+      "is_repeatable": false,
+      "cooldown_seconds": 0
+    }
+  },
+  "presets": {
+    "locations": {
+      "forest": {
+        "atmosphere": "natural y tranquilo",
+        "lighting": "filtered",
+        "properties": {
+          "nature": true,
+          "sounds": "birds_wind"
+        }
+      },
+      "dungeon": {
+        "atmosphere": "oscuro y amenazante",
+        "lighting": "dark",
+        "properties": {
+          "dangerous": true,
+          "echo": true
+        }
+      },
+      "castle": {
+        "atmosphere": "majestuoso y antiguo",
+        "lighting": "dim",
+        "properties": {
+          "historic": true,
+          "stone_walls": true
+        }
+      },
+      "shop": {
+        "atmosphere": "acogedor y comercial",
+        "lighting": "bright",
+        "properties": {
+          "commerce": true,
+          "safe": true
+        }
+      }
+    },
+    "objects": {
+      "weapon": {
+        "properties": {
+          "damage": 10,
+          "durability": 100,
+          "type": "weapon"
+        },
+        "keywords": [
+          "arma",
+          "combate",
+          "weapon"
+        ],
+        "is_takeable": true,
+        "is_usable": true
+      },
+      "tool": {
+        "properties": {
+          "durability": 100,
+          "type": "tool"
+        },
+        "keywords": [
+          "herramienta",
+          "tool",
+          "útil"
+        ],
+        "is_takeable": true,
+        "is_usable": true
+      },
+      "treasure": {
+        "properties": {
+          "value": 100,
+          "type": "treasure"
+        },
+        "keywords": [
+          "tesoro",
+          "valioso",
+          "treasure"
+        ],
+        "is_takeable": true,
+        "is_usable": false
+      },
+      "furniture": {
+        "properties": {
+          "type": "furniture"
+        },
+        "keywords": [
+          "mueble",
+          "furniture"
+        ],
+        "is_takeable": false,
+        "is_usable": true
+      }
+    }
+  }
+}
