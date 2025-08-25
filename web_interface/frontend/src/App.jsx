@@ -12,6 +12,7 @@ import BackupManager from './pages/BackupManager'
 import SystemLogs from './pages/SystemLogs'
 import Analytics from './pages/Analytics'
 import Settings from './pages/Settings'
+import MCPWorldEditor from './pages/MCPWorldEditor'
 
 // Services
 import { apiService } from './services/api'
@@ -230,6 +231,7 @@ function App() {
           >
             <Routes>
               <Route path="/" element={<Dashboard />} />
+              <Route path="/mcp-editor" element={<MCPWorldEditor />} />
               <Route path="/backups" element={<BackupManager />} />
               <Route path="/logs" element={<SystemLogs />} />
               <Route path="/analytics" element={<Analytics />} />

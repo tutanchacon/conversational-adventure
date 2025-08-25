@@ -22,6 +22,7 @@ import {
   Close as CloseIcon,
   Circle as CircleIcon,
   SportsEsports as GameIcon,
+  Castle as CastleIcon,
 } from '@mui/icons-material'
 import { useNavigate, useLocation } from 'react-router-dom'
 
@@ -30,6 +31,7 @@ const collapsedWidth = 70
 
 const menuItems = [
   { path: '/', label: 'Dashboard', icon: DashboardIcon, color: '#4a90e2' },
+  { path: '/mcp-editor', label: 'MCP World Editor', icon: CastleIcon, color: '#e67e22' },
   { path: '/backups', label: 'Backups', icon: BackupIcon, color: '#27ae60' },
   { path: '/logs', label: 'System Logs', icon: LogsIcon, color: '#f39c12' },
   { path: '/analytics', label: 'Analytics', icon: AnalyticsIcon, color: '#9b59b6' },

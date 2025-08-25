@@ -175,39 +175,16 @@
 ### ✅ **Sistema de IA CONFIRMADO FUNCIONAL**
 - **Sistema AI v3.0**: ✅ **COMPLETAMENTE OPERATIVO**
 - **Servidor AI**: ✅ **http://127.0.0.1:8091 ACTIVO**
-- **Ollama Integration**: ✅ **Llama 3.2 CONECTADO**
-- **todas las características de IA**: ✅ **FUNCIONANDO**
-
-### ❌ **Problemas Menores Restantes**
-- **Dead Code**: Aún hay archivos de prueba acumulados
-- **Documentación**: Múltiples archivos .md redundantes
 - **Web Interface v2.0**: Estado aún no verificado (diferente del servidor IA)
 
-### ❓ **Pendiente de Verificar**
-- Estado de `web_interface/` (FastAPI + React)
-- Funcionalidad completa del sistema multiplayer
 
 ---
-
-## 🎯 **PRÓXIMOS PASOS - PLAN ACTUALIZADO**
-
-### **PASO 1: VERIFICACIÓN PENDIENTE**
-- [ ] Verificar si web interface v2.0 (React+FastAPI) está funcional
-- [ ] Probar sistema multiplayer
 - [ ] Confirmar que ambas interfaces no entren en conflicto
 
-### **PASO 2: OPTIMIZACIÓN (OPCIONAL)**
-- [ ] Eliminar archivos de prueba obsoletos
-- [ ] Consolidar documentación redundante
 - [ ] Mejorar rendimiento del sistema de IA
 
-### **PASO 3: DESARROLLO FUTURO**
-- [ ] **NO reinventar**: El sistema de IA v3.0 está COMPLETO
-- [ ] Posibles mejoras: nuevas personalidades, más idiomas
-- [ ] Integración con nuevas características del juego base
 
 ### **🚨 IMPORTANTE**
-- **El sistema de IA v3.0 está COMPLETAMENTE FUNCIONAL**
 - **NO necesita reimplementación**
 - **Cualquier desarrollo debe PARTIR del estado actual**
 
@@ -216,55 +193,28 @@
 ## 📋 **CHECKLIST DE VERIFICACIÓN ANTES DE DESARROLLAR**
 
 Antes de implementar CUALQUIER característica nueva, VERIFICAR:
-
 ### ✅ **Checklist Obligatorio**
 - [ ] ¿Ya existe esta funcionalidad en algún archivo?
 - [ ] ¿El README.md es correcto para esta característica?
 - [ ] ¿Hay archivos relacionados en el proyecto?
 - [ ] ¿Qué dice el CHANGELOG.md sobre esto?
 - [ ] ¿Hay pruebas existentes para esto?
-
-### 🔍 **Comandos de Verificación**
-```powershell
-# Buscar archivos relacionados
 Get-ChildItem -Recurse -Name "*keyword*"
-
 # Buscar en contenido
 Select-String -Pattern "keyword" -Path "*.py" -SimpleMatch
-
-# Verificar dependencias
-pip list | findstr "package-name"
-```
 
 ---
 
 ## 🚀 **COMANDOS DE INICIO VERIFICADOS**
 
-### **✅ Sistema de IA (VERIFICADO FUNCIONAL)**
-```powershell
-# Activar entorno
-.\venv\Scripts\activate
-
 # ✅ SISTEMA AI v3.0 (PUERTO 8091) - FUNCIONAL
-python start_ai_game.py
-# URL: http://127.0.0.1:8091
-
-# ✅ Servidor IA directo - FUNCIONAL  
 python ai_web_server.py
 ```
-
-### **✅ Sistema Base v1.1.0 (FUNCIONAL)**
 ```powershell
 # Juego básico v1.1.0 con búsqueda vectorial
-python adventure_game.py
-```
 
 ### **🌍 NUEVO: MCP World Editor (VERIFICADO FUNCIONAL 25/08/2025)**
-```powershell
-# ✅ Editor de mundos con MCP - FUNCIONAL
-python mcp_world_editor.py
 # Ejecuta demostración completa de creación de contenido
-
 # ✅ Ejemplo práctico - PROBADO Y FUNCIONAL
 python create_fantasy_castle.py
 # Crea castillo completo con ubicaciones, objetos y eventos
@@ -346,3 +296,68 @@ ollama ps
 - **NO asumir** que algo no existe - verificar primero
 - **El sistema de IA v3.0 está COMPLETO y FUNCIONAL**
 - **NO reimplementar** características existentes
+
+---
+
+#### 📝 **Pasos de Uso y Testing (2025-08-25)**
+
+**1. Instalación y entorno**
+    - Clonar repositorio
+    - Crear entorno virtual Python
+    - Instalar dependencias AI (`pip install -r requirements_ai.txt`)
+    - Instalar Node.js y dependencias frontend (`npm install`)
+    - Configurar Ollama y modelo Llama 3.2
+
+**2. Testing rápido**
+    - Ejecutar `python create_fantasy_castle.py` para demo MCP
+    - Ejecutar `python mcp_world_editor.py` para pruebas programáticas
+    - Iniciar backend: `python demo_server.py` (puerto 8001)
+    - Iniciar frontend: `npm run dev` (puerto 3000)
+    - Acceder a `http://localhost:3000/mcp-editor` para editor web
+
+**3. Ejemplo programático**
+    ```python
+    from mcp_world_editor import MCPWorldEditor, quick_location, quick_object, quick_event
+    editor = MCPWorldEditor()
+    loc = quick_location(name="Bosque", theme="forest")
+    obj = quick_object(name="Espada", location_id=loc.id, object_type="weapon")
+    evt = quick_event(name="Evento", trigger_type="object_use", trigger_condition=obj.id)
+    ```
+
+**4. Testing de endpoints REST**
+    - Verificar `/api/mcp/status` y `/api/mcp/world/overview` en navegador
+    - Probar creación de ubicaciones, objetos y eventos vía API
+
+**5. Notas de conectividad**
+    - WebSocket no implementado en demo, error visual esperado
+    - Toda la funcionalidad principal MCP está disponible vía REST y web
+
+---
+
+## 🚦 **PRÓXIMOS PASOS Y ROADMAP (2025-08-25)**
+
+1. **Interfaz Web MCP World Editor**
+   - Mejorar UI/UX, agregar validaciones visuales y feedback
+   - Implementar WebSocket para notificaciones en tiempo real
+   - Agregar selector de idioma y personalidad en el frontend
+
+2. **Persistencia y Exportación**
+   - Mejorar sistema de exportación/importación de templates
+   - Permitir backups automáticos desde la web
+
+3. **Testing y QA**
+   - Pruebas automatizadas de endpoints REST y scripts MCP
+   - Validar integración con AI Engine y memoria perfecta
+
+4. **Optimización y Escalabilidad**
+   - Mejorar rendimiento de búsqueda vectorial
+   - Optimizar uso de memoria y almacenamiento
+
+5. **Fase 5+ (Planeado)**
+   - Multiplayer real-time mejorado
+   - Aplicación móvil
+   - Integración con más modelos LLM
+   - Sistema de plugins/extensiones
+   - Voice interaction
+
+---

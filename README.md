@@ -1,3 +1,30 @@
+#
+## 🌐 INTEGRACIÓN WEB Y API REST (2025-08-25)
+
+### **Backend FastAPI**
+- Endpoints REST para creación y consulta de contenido MCP:
+    - `/api/mcp/status` - Estado del editor
+    - `/api/mcp/world/overview` - Vista general
+    - `/api/mcp/locations` - Crear ubicaciones
+    - `/api/mcp/objects` - Crear objetos
+    - `/api/mcp/events` - Crear eventos
+    - `/api/mcp/templates/export` - Exportar templates
+    - `/api/mcp/templates/import` - Importar templates
+    - `/api/mcp/quick/location` - Creación rápida
+
+### **Frontend React**
+- Interfaz web profesional (dashboard, MCP World Editor)
+- `/mcp-editor` - Editor visual de contenido MCP
+- Conexión directa a backend REST (puerto 8001)
+- Soporte para templates, presets, eventos y exportación
+- Estado actual: **Funcional, sin WebSocket**
+
+### 🧪 **Testing y Estado Actual**
+- **Backend**: Todos los endpoints MCP REST verificados y funcionales
+- **Frontend**: Interfaz MCP World Editor funcional, conectada a backend
+- **WebSocket**: No implementado en demo, error visual esperado pero no afecta funcionalidad principal
+- **Documentación**: Este README actualizado con arquitectura, ejemplos y API
+
 # 🧠 Adventure Game v3.0 - AI Enhanced Multilingual System
 
 Un sistema de aventura conversacional de última generación que combina **Inteligencia Artificial avanzada**, **memoria perfecta con Event Sourcing**, **búsqueda vectorial semántica**, **interfaz web profesional** y **soporte multilingüe**. El sistema nunca olvida nada y puede narrar aventuras en 6 idiomas diferentes usando IA local con Ollama.

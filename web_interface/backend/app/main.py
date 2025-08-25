@@ -52,6 +52,13 @@ except ImportError:
     EnhancedMCPProvider = None
 
 try:
+    from mcp_world_editor import MCPWorldEditor
+    MCP_WORLD_EDITOR_AVAILABLE = True
+except ImportError:
+    MCP_WORLD_EDITOR_AVAILABLE = False
+    MCPWorldEditor = None
+
+try:
     from multiplayer.websocket_handler import websocket_manager, websocket_endpoint
     from multiplayer.multiplayer_game import get_multiplayer_game
     MULTIPLAYER_AVAILABLE = True
@@ -105,6 +112,7 @@ class SystemManager:
         self.restore_manager = None
         self.memory_system = None
         self.mcp_provider = None
+        self.mcp_world_editor = None
         self.websocket_manager = WebSocketManager()
         self.system_stats = {
             "uptime": datetime.now(),
@@ -142,6 +150,16 @@ class SystemManager:
                 logger.info("✅ MCP Provider inicializado")
             else:
                 logger.warning("⚠️ MCP Provider no disponible")
+            
+            # Inicializar MCP World Editor si está disponible
+            if MCP_WORLD_EDITOR_AVAILABLE and self.memory_system and self.mcp_provider:
+                self.mcp_world_editor = MCPWorldEditor(
+                    memory_system=self.memory_system, 
+                    mcp_provider=self.mcp_provider
+                )
+                logger.info("✅ MCP World Editor inicializado")
+            else:
+                logger.warning("⚠️ MCP World Editor no disponible")
             
             # Inicializar sistema multi-jugador si está disponible
             if MULTIPLAYER_AVAILABLE and self.memory_system:
@@ -470,6 +488,186 @@ async def disconnect_player(
     try:
         await websocket_manager.disconnect_player(player_id)
         return {"success": True, "message": f"Jugador {player_id} desconectado"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# =============================================================================
+# 🌍 MCP WORLD EDITOR ENDPOINTS
+# =============================================================================
+
+@app.get("/api/mcp/status")
+async def get_mcp_status():
+    """Estado del MCP World Editor"""
+    if not system_manager.mcp_world_editor:
+        raise HTTPException(status_code=503, detail="MCP World Editor no disponible")
+    
+    return {
+        "status": "available",
+        "features": {
+            "location_creation": True,
+            "object_creation": True,
+            "event_creation": True,
+            "template_system": True,
+            "json_export": True
+        },
+        "presets": {
+            "locations": ["forest", "dungeon", "castle", "shop"],
+            "objects": ["weapon", "tool", "treasure", "furniture"],
+            "events": ["location_enter", "object_use", "command", "time"]
+        }
+    }
+
+@app.get("/api/mcp/world/overview")
+async def get_world_overview():
+    """Vista general del mundo con contexto MCP"""
+    if not system_manager.mcp_world_editor:
+        raise HTTPException(status_code=503, detail="MCP World Editor no disponible")
+    
+    try:
+        overview = await system_manager.mcp_world_editor.get_world_overview_with_mcp()
+        return overview
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/mcp/locations")
+async def create_location_mcp(location_data: dict):
+    """Crear ubicación usando MCP World Editor"""
+    if not system_manager.mcp_world_editor:
+        raise HTTPException(status_code=503, detail="MCP World Editor no disponible")
+    
+    try:
+        result = await system_manager.mcp_world_editor.create_location_with_mcp(
+            name=location_data.get("name"),
+            description=location_data.get("description"),
+            preset=location_data.get("preset"),
+            connections=location_data.get("connections", []),
+            properties=location_data.get("properties", {})
+        )
+        
+        # Notificar por WebSocket
+        await system_manager.websocket_manager.broadcast({
+            "type": "location_created",
+            "data": result,
+            "timestamp": datetime.now().isoformat()
+        })
+        
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/mcp/objects")
+async def create_object_mcp(object_data: dict):
+    """Crear objeto usando MCP World Editor"""
+    if not system_manager.mcp_world_editor:
+        raise HTTPException(status_code=503, detail="MCP World Editor no disponible")
+    
+    try:
+        result = await system_manager.mcp_world_editor.create_object_with_mcp(
+            name=object_data.get("name"),
+            description=object_data.get("description"),
+            location_name=object_data.get("location_name"),
+            preset=object_data.get("preset"),
+            properties=object_data.get("properties", {})
+        )
+        
+        # Notificar por WebSocket
+        await system_manager.websocket_manager.broadcast({
+            "type": "object_created",
+            "data": result,
+            "timestamp": datetime.now().isoformat()
+        })
+        
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/mcp/events")
+async def create_event_mcp(event_data: dict):
+    """Crear evento usando MCP World Editor"""
+    if not system_manager.mcp_world_editor:
+        raise HTTPException(status_code=503, detail="MCP World Editor no disponible")
+    
+    try:
+        result = await system_manager.mcp_world_editor.create_event_with_mcp(
+            name=event_data.get("name"),
+            description=event_data.get("description"),
+            trigger_type=event_data.get("trigger_type"),
+            trigger_value=event_data.get("trigger_value"),
+            action_type=event_data.get("action_type"),
+            action_data=event_data.get("action_data", {}),
+            properties=event_data.get("properties", {})
+        )
+        
+        # Notificar por WebSocket
+        await system_manager.websocket_manager.broadcast({
+            "type": "event_created",
+            "data": result,
+            "timestamp": datetime.now().isoformat()
+        })
+        
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/mcp/templates/export")
+async def export_templates():
+    """Exportar templates a JSON"""
+    if not system_manager.mcp_world_editor:
+        raise HTTPException(status_code=503, detail="MCP World Editor no disponible")
+    
+    try:
+        templates = system_manager.mcp_world_editor.export_templates_to_json()
+        return {
+            "success": True,
+            "templates": templates,
+            "exported_at": datetime.now().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/mcp/templates/import")
+async def import_templates(templates_data: dict):
+    """Importar templates desde JSON"""
+    if not system_manager.mcp_world_editor:
+        raise HTTPException(status_code=503, detail="MCP World Editor no disponible")
+    
+    try:
+        result = await system_manager.mcp_world_editor.load_templates_from_json(
+            templates_data.get("templates", {})
+        )
+        
+        # Notificar por WebSocket
+        await system_manager.websocket_manager.broadcast({
+            "type": "templates_imported",
+            "data": result,
+            "timestamp": datetime.now().isoformat()
+        })
+        
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/mcp/quick/location")
+async def quick_create_location(quick_data: dict):
+    """Creación rápida de ubicación"""
+    if not system_manager.mcp_world_editor:
+        raise HTTPException(status_code=503, detail="MCP World Editor no disponible")
+    
+    try:
+        result = await system_manager.mcp_world_editor.quick_location(
+            name=quick_data.get("name"),
+            theme=quick_data.get("theme", "generic"),
+            connections=quick_data.get("connections", [])
+        )
+        
+        # Notificar por WebSocket
+        await system_manager.websocket_manager.broadcast({
+            "type": "quick_location_created",
+            "data": result,
+            "timestamp": datetime.now().isoformat()
+        })
+        
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
