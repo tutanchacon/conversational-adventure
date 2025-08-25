@@ -1,4 +1,33 @@
 #
+# MCP World Editor - Estado Actual y Limitaciones
+
+## Estado Actual (Agosto 2025)
+
+- El backend demo (`demo_server.py`) expone endpoints REST para crear ubicaciones, objetos y eventos, pero **solo retorna datos de ejemplo**. No existe persistencia real ni conexión a base de datos.
+- El frontend permite simular la creación de contenido, pero **no realiza operaciones reales de Alta, Baja, Modificación (ABM)**.
+- No existen endpoints para editar ni eliminar contenido. Solo se simula la creación.
+- La vista general del mundo (`/api/mcp/world/overview`) muestra datos estáticos.
+
+## Limitaciones
+
+- **No hay persistencia:** Todo lo creado se pierde al recargar o reiniciar.
+- **No hay ABM:** No se puede editar ni eliminar contenido desde la web.
+- **Solo modo demo:** El sistema actual es útil para pruebas de interfaz y flujo, pero no para gestión real de datos.
+
+## Próximos Pasos
+
+1. **Implementar persistencia real:** Conectar los endpoints a una base de datos (SQLite, ChromaDB, etc.) usando la lógica de `mcp_world_editor.py`.
+2. **Agregar endpoints ABM:** Crear rutas para editar y eliminar ubicaciones, objetos y eventos.
+3. **Actualizar el frontend:** Permitir edición y eliminación desde la interfaz web.
+4. **Documentar la arquitectura:** Mantener actualizado el roadmap y los archivos de estado del proyecto.
+5. **Pruebas de integración:** Validar el flujo completo entre frontend, backend y base de datos.
+
+## Referencias
+
+- Backend demo: `web_interface/backend/app/demo_server.py`
+- Lógica avanzada: `mcp_world_editor.py`
+- Frontend: `web_interface/frontend/src/components/MCPWorldEditor.jsx`
+- Documentación: `PROJECT_STATUS_CONTROL.md`
 ## 🌐 INTEGRACIÓN WEB Y API REST (2025-08-25)
 
 ### **Backend FastAPI**

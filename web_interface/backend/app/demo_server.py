@@ -101,6 +101,23 @@ async def demo_backups():
 # =============================================================================
 # 🌍 MCP WORLD EDITOR ENDPOINTS (DEMO)
 # =============================================================================
+# -----------------------------
+# Almacenamiento en memoria (Demo)
+# -----------------------------
+locations_db = [
+    {"id": 1, "name": "Torre Principal", "description": "Una torre majestuosa", "preset": "castle"},
+    {"id": 2, "name": "Patio del Castillo", "description": "Un patio amplio", "preset": "castle"},
+    {"id": 3, "name": "Biblioteca Mágica", "description": "Libros antiguos y magia", "preset": "dungeon"}
+]
+objects_db = [
+    {"id": 1, "name": "Espada Brillante", "description": "Brilla con luz propia", "location_name": "Torre Principal", "preset": "weapon"},
+    {"id": 2, "name": "Orbe de Poder", "description": "Pulsa con energía", "location_name": "Torre Principal", "preset": "treasure"}
+]
+events_db = [
+    {"id": 1, "name": "Bienvenida Real", "trigger_type": "location_enter", "trigger_value": "Torre Principal", "action_type": "message"}
+]
+def get_next_id(db):
+    return max([item["id"] for item in db], default=0) + 1
 
 @app.get("/api/mcp/status")
 async def get_mcp_status():
@@ -125,71 +142,55 @@ async def get_mcp_status():
 async def get_world_overview():
     """Vista general del mundo (Demo)"""
     return {
-        "total_locations": 3,
-        "total_objects": 5,
-        "total_events": 2,
-        "locations": [
-            {"name": "Torre Principal", "description": "Una torre majestuosa con vistas al reino", "connections": ["Patio del Castillo"]},
-            {"name": "Patio del Castillo", "description": "Un amplio patio con jardines bien cuidados", "connections": ["Torre Principal", "Biblioteca Mágica"]},
-            {"name": "Biblioteca Mágica", "description": "Una biblioteca llena de libros antiguos y pergaminos mágicos", "connections": ["Patio del Castillo"]}
-        ],
-        "objects": [
-            {"name": "Espada Brillante", "description": "Una espada que brilla con luz propia", "location_name": "Torre Principal"},
-            {"name": "Orbe de Poder", "description": "Un orbe mágico que pulsa con energía", "location_name": "Torre Principal"},
-            {"name": "Fuente Mágica", "description": "Una fuente que nunca se agota", "location_name": "Patio del Castillo"},
-            {"name": "Libro de Hechizos", "description": "Un grimorio con hechizos poderosos", "location_name": "Biblioteca Mágica"},
-            {"name": "Mesa de Lectura", "description": "Una mesa de madera tallada para estudiar", "location_name": "Biblioteca Mágica"}
-        ],
-        "events": [
-            {"name": "Bienvenida Real", "trigger_type": "location_enter", "trigger_value": "Torre Principal", "action_type": "message"},
-            {"name": "Sabiduría Antigua", "trigger_type": "object_use", "trigger_value": "Libro de Hechizos", "action_type": "message"}
-        ]
+        "total_locations": len(locations_db),
+        "total_objects": len(objects_db),
+        "total_events": len(events_db),
+        "locations": locations_db,
+        "objects": objects_db,
+        "events": events_db
     }
 
 @app.post("/api/mcp/locations")
 async def create_location_mcp(location_data: dict):
     """Crear ubicación (Demo)"""
-    return {
-        "success": True,
-        "message": "Ubicación creada exitosamente (Demo)",
-        "location": {
-            "name": location_data.get("name", "Nueva Ubicación"),
-            "description": location_data.get("description", "Descripción generada"),
-            "preset": location_data.get("preset", "forest"),
-            "created_at": datetime.now().isoformat()
-        }
+    new_location = {
+        "id": get_next_id(locations_db),
+        "name": location_data.get("name", "Nueva Ubicación"),
+        "description": location_data.get("description", "Descripción generada"),
+        "preset": location_data.get("preset", "forest"),
+        "created_at": datetime.now().isoformat()
     }
+    locations_db.append(new_location)
+    return {"success": True, "message": "Ubicación creada exitosamente", "location": new_location}
 
 @app.post("/api/mcp/objects")
 async def create_object_mcp(object_data: dict):
     """Crear objeto (Demo)"""
-    return {
-        "success": True,
-        "message": "Objeto creado exitosamente (Demo)",
-        "object": {
-            "name": object_data.get("name", "Nuevo Objeto"),
-            "description": object_data.get("description", "Descripción generada"),
-            "location_name": object_data.get("location_name", "Ubicación desconocida"),
-            "preset": object_data.get("preset", "treasure"),
-            "created_at": datetime.now().isoformat()
-        }
+    new_object = {
+        "id": get_next_id(objects_db),
+        "name": object_data.get("name", "Nuevo Objeto"),
+        "description": object_data.get("description", "Descripción generada"),
+        "location_name": object_data.get("location_name", "Ubicación desconocida"),
+        "preset": object_data.get("preset", "treasure"),
+        "created_at": datetime.now().isoformat()
     }
+    objects_db.append(new_object)
+    return {"success": True, "message": "Objeto creado exitosamente", "object": new_object}
 
 @app.post("/api/mcp/events")
 async def create_event_mcp(event_data: dict):
     """Crear evento (Demo)"""
-    return {
-        "success": True,
-        "message": "Evento creado exitosamente (Demo)",
-        "event": {
-            "name": event_data.get("name", "Nuevo Evento"),
-            "description": event_data.get("description", "Descripción generada"),
-            "trigger_type": event_data.get("trigger_type", "location_enter"),
-            "trigger_value": event_data.get("trigger_value", ""),
-            "action_type": event_data.get("action_type", "message"),
-            "created_at": datetime.now().isoformat()
-        }
+    new_event = {
+        "id": get_next_id(events_db),
+        "name": event_data.get("name", "Nuevo Evento"),
+        "description": event_data.get("description", "Descripción generada"),
+        "trigger_type": event_data.get("trigger_type", "location_enter"),
+        "trigger_value": event_data.get("trigger_value", ""),
+        "action_type": event_data.get("action_type", "message"),
+        "created_at": datetime.now().isoformat()
     }
+    events_db.append(new_event)
+    return {"success": True, "message": "Evento creado exitosamente", "event": new_event}
 
 @app.get("/api/mcp/templates/export")
 async def export_templates():
@@ -212,6 +213,79 @@ async def import_templates(templates_data: dict):
         "message": "Templates importados exitosamente (Demo)",
         "imported_at": datetime.now().isoformat()
     }
+# -----------------------------
+# ABM: Editar y Eliminar (PUT/DELETE)
+# -----------------------------
+from fastapi import HTTPException
+
+# Editar ubicación
+@app.put("/api/mcp/locations/{location_id}")
+async def update_location(location_id: int, location_data: dict):
+    for loc in locations_db:
+        if loc["id"] == location_id:
+            loc.update({
+                "name": location_data.get("name", loc["name"]),
+                "description": location_data.get("description", loc["description"]),
+                "preset": location_data.get("preset", loc["preset"])
+            })
+            return {"success": True, "message": "Ubicación actualizada", "location": loc}
+    raise HTTPException(status_code=404, detail="Ubicación no encontrada")
+
+# Eliminar ubicación
+@app.delete("/api/mcp/locations/{location_id}")
+async def delete_location(location_id: int):
+    for loc in locations_db:
+        if loc["id"] == location_id:
+            locations_db.remove(loc)
+            return {"success": True, "message": "Ubicación eliminada"}
+    raise HTTPException(status_code=404, detail="Ubicación no encontrada")
+
+# Editar objeto
+@app.put("/api/mcp/objects/{object_id}")
+async def update_object(object_id: int, object_data: dict):
+    for obj in objects_db:
+        if obj["id"] == object_id:
+            obj.update({
+                "name": object_data.get("name", obj["name"]),
+                "description": object_data.get("description", obj["description"]),
+                "location_name": object_data.get("location_name", obj["location_name"]),
+                "preset": object_data.get("preset", obj["preset"])
+            })
+            return {"success": True, "message": "Objeto actualizado", "object": obj}
+    raise HTTPException(status_code=404, detail="Objeto no encontrado")
+
+# Eliminar objeto
+@app.delete("/api/mcp/objects/{object_id}")
+async def delete_object(object_id: int):
+    for obj in objects_db:
+        if obj["id"] == object_id:
+            objects_db.remove(obj)
+            return {"success": True, "message": "Objeto eliminado"}
+    raise HTTPException(status_code=404, detail="Objeto no encontrado")
+
+# Editar evento
+@app.put("/api/mcp/events/{event_id}")
+async def update_event(event_id: int, event_data: dict):
+    for ev in events_db:
+        if ev["id"] == event_id:
+            ev.update({
+                "name": event_data.get("name", ev["name"]),
+                "description": event_data.get("description", ev["description"]),
+                "trigger_type": event_data.get("trigger_type", ev["trigger_type"]),
+                "trigger_value": event_data.get("trigger_value", ev["trigger_value"]),
+                "action_type": event_data.get("action_type", ev["action_type"])
+            })
+            return {"success": True, "message": "Evento actualizado", "event": ev}
+    raise HTTPException(status_code=404, detail="Evento no encontrado")
+
+# Eliminar evento
+@app.delete("/api/mcp/events/{event_id}")
+async def delete_event(event_id: int):
+    for ev in events_db:
+        if ev["id"] == event_id:
+            events_db.remove(ev)
+            return {"success": True, "message": "Evento eliminado"}
+    raise HTTPException(status_code=404, detail="Evento no encontrado")
 
 @app.post("/api/mcp/quick/location")
 async def quick_create_location(quick_data: dict):

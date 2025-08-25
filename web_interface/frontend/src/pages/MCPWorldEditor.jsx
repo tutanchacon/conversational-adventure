@@ -19,6 +19,8 @@ const MCPWorldEditor = () => {
   const [worldOverview, setWorldOverview] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [dialogType, setDialogType] = useState('location'); // location, object, event
+  const [editMode, setEditMode] = useState(false);
+  const [editId, setEditId] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   
   // Estados para formularios
@@ -80,17 +82,22 @@ const MCPWorldEditor = () => {
     setSnackbar({ open: true, message, severity });
   };
 
-  const handleCreateLocation = async () => {
+  const handleCreateOrEditLocation = async () => {
     try {
-      const response = await fetch('http://localhost:8001/api/mcp/locations', {
-        method: 'POST',
+      const url = editMode
+        ? `http://localhost:8001/api/mcp/locations/${editId}`
+        : 'http://localhost:8001/api/mcp/locations';
+      const method = editMode ? 'PUT' : 'POST';
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(locationForm)
       });
-      
       if (response.ok) {
-        showSnackbar('Ubicación creada exitosamente');
+        showSnackbar(editMode ? 'Ubicación actualizada' : 'Ubicación creada exitosamente');
         setOpenDialog(false);
+        setEditMode(false);
+        setEditId(null);
         loadWorldOverview();
         setLocationForm({ name: '', description: '', preset: 'forest', connections: [], properties: {} });
       } else {
@@ -98,21 +105,57 @@ const MCPWorldEditor = () => {
         showSnackbar(`Error: ${error.detail}`, 'error');
       }
     } catch (error) {
-      showSnackbar('Error creando ubicación', 'error');
+      showSnackbar(editMode ? 'Error actualizando ubicación' : 'Error creando ubicación', 'error');
     }
   };
 
-  const handleCreateObject = async () => {
+  const handleEditLocation = (location) => {
+    setDialogType('location');
+    setEditMode(true);
+    setEditId(location.id);
+    setLocationForm({
+      name: location.name,
+      description: location.description,
+      preset: location.preset || 'forest',
+      connections: location.connections || [],
+      properties: location.properties || {}
+    });
+    setOpenDialog(true);
+  };
+
+  const handleDeleteLocation = async (id) => {
+    if (!window.confirm('¿Eliminar ubicación?')) return;
     try {
-      const response = await fetch('http://localhost:8001/api/mcp/objects', {
-        method: 'POST',
+      const response = await fetch(`http://localhost:8001/api/mcp/locations/${id}`, { method: 'DELETE' });
+      if (response.ok) {
+        showSnackbar('Ubicación eliminada');
+        loadWorldOverview();
+      } else {
+        const error = await response.json();
+        showSnackbar(`Error: ${error.detail}`, 'error');
+      }
+    } catch (error) {
+      showSnackbar('Error eliminando ubicación', 'error');
+    }
+  };
+
+  // ABM para objetos
+  const handleCreateOrEditObject = async () => {
+    try {
+      const url = editMode
+  ? `http://localhost:8001/api/mcp/objects/${editId}`
+        : 'http://localhost:8001/api/mcp/objects';
+      const method = editMode ? 'PUT' : 'POST';
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(objectForm)
       });
-      
       if (response.ok) {
-        showSnackbar('Objeto creado exitosamente');
+        showSnackbar(editMode ? 'Objeto actualizado' : 'Objeto creado exitosamente');
         setOpenDialog(false);
+        setEditMode(false);
+        setEditId(null);
         loadWorldOverview();
         setObjectForm({ name: '', description: '', location_name: '', preset: 'treasure', properties: {} });
       } else {
@@ -120,32 +163,97 @@ const MCPWorldEditor = () => {
         showSnackbar(`Error: ${error.detail}`, 'error');
       }
     } catch (error) {
-      showSnackbar('Error creando objeto', 'error');
+      showSnackbar(editMode ? 'Error actualizando objeto' : 'Error creando objeto', 'error');
     }
   };
 
-  const handleCreateEvent = async () => {
+  const handleEditObject = (object) => {
+    setDialogType('object');
+    setEditMode(true);
+    setEditId(object.id);
+    setObjectForm({
+      name: object.name,
+      description: object.description,
+      location_name: object.location_name || '',
+      preset: object.preset || 'treasure',
+      properties: object.properties || {}
+    });
+    setOpenDialog(true);
+  };
+
+  const handleDeleteObject = async (id) => {
+    if (!window.confirm('¿Eliminar objeto?')) return;
     try {
-      const response = await fetch('http://localhost:8001/api/mcp/events', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(eventForm)
-      });
-      
+      const response = await fetch(`http://localhost:8001/api/mcp/objects/${id}`, { method: 'DELETE' });
       if (response.ok) {
-        showSnackbar('Evento creado exitosamente');
-        setOpenDialog(false);
+        showSnackbar('Objeto eliminado');
         loadWorldOverview();
-        setEventForm({ 
-          name: '', description: '', trigger_type: 'location_enter', 
-          trigger_value: '', action_type: 'message', action_data: {}, properties: {} 
-        });
       } else {
         const error = await response.json();
         showSnackbar(`Error: ${error.detail}`, 'error');
       }
     } catch (error) {
-      showSnackbar('Error creando evento', 'error');
+      showSnackbar('Error eliminando objeto', 'error');
+    }
+  };
+
+  // ABM para eventos
+  const handleCreateOrEditEvent = async () => {
+    try {
+      const url = editMode
+        ? `http://localhost:8001/api/mcp/events/${editId}`
+        : 'http://localhost:8001/api/mcp/events';
+      const method = editMode ? 'PUT' : 'POST';
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(eventForm)
+      });
+      if (response.ok) {
+        showSnackbar(editMode ? 'Evento actualizado' : 'Evento creado exitosamente');
+        setOpenDialog(false);
+        setEditMode(false);
+        setEditId(null);
+        loadWorldOverview();
+        setEventForm({ name: '', description: '', trigger_type: 'location_enter', trigger_value: '', action_type: 'message', action_data: {}, properties: {} });
+      } else {
+        const error = await response.json();
+        showSnackbar(`Error: ${error.detail}`, 'error');
+      }
+    } catch (error) {
+      showSnackbar(editMode ? 'Error actualizando evento' : 'Error creando evento', 'error');
+    }
+  };
+
+  const handleEditEvent = (event) => {
+    setDialogType('event');
+    setEditMode(true);
+    setEditId(event.id);
+    setEventForm({
+      name: event.name,
+      description: event.description,
+      trigger_type: event.trigger_type || 'location_enter',
+      trigger_value: event.trigger_value || '',
+      action_type: event.action_type || 'message',
+      action_data: event.action_data || {},
+      properties: event.properties || {}
+    });
+    setOpenDialog(true);
+  };
+
+  const handleDeleteEvent = async (id) => {
+    if (!window.confirm('¿Eliminar evento?')) return;
+    try {
+      const response = await fetch(`http://localhost:8001/api/mcp/events/${id}`, { method: 'DELETE' });
+      if (response.ok) {
+        showSnackbar('Evento eliminado');
+        loadWorldOverview();
+      } else {
+        const error = await response.json();
+        showSnackbar(`Error: ${error.detail}`, 'error');
+      }
+    } catch (error) {
+      showSnackbar('Error eliminando evento', 'error');
     }
   };
 
@@ -290,6 +398,10 @@ const MCPWorldEditor = () => {
                         </Box>
                       )}
                     </CardContent>
+                    <CardActions>
+                      <Button size="small" color="primary" onClick={() => handleEditLocation(location)}>Editar</Button>
+                      <Button size="small" color="error" onClick={() => handleDeleteLocation(location.id)}>Eliminar</Button>
+                    </CardActions>
                   </Card>
                 </Grid>
               ))}
@@ -313,6 +425,10 @@ const MCPWorldEditor = () => {
                         Ubicación: {object.location_name}
                       </Typography>
                     </CardContent>
+                    <CardActions>
+                      <Button size="small" color="primary" onClick={() => handleEditObject(object)}>Editar</Button>
+                      <Button size="small" color="error" onClick={() => handleDeleteObject(object.id)}>Eliminar</Button>
+                    </CardActions>
                   </Card>
                 </Grid>
               ))}
@@ -369,7 +485,7 @@ const MCPWorldEditor = () => {
       {/* Dialog para crear elementos */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
         <DialogTitle>
-          Crear {dialogType === 'location' ? 'Ubicación' : dialogType === 'object' ? 'Objeto' : 'Evento'}
+          {editMode ? 'Editar' : 'Crear'} {dialogType === 'location' ? 'Ubicación' : dialogType === 'object' ? 'Objeto' : 'Evento'}
         </DialogTitle>
         <DialogContent>
           {dialogType === 'location' && (
@@ -531,12 +647,12 @@ const MCPWorldEditor = () => {
           <Button 
             variant="contained"
             onClick={
-              dialogType === 'location' ? handleCreateLocation :
+              dialogType === 'location' ? handleCreateOrEditLocation :
               dialogType === 'object' ? handleCreateObject :
               handleCreateEvent
             }
           >
-            Crear
+            {editMode ? 'Guardar' : 'Crear'}
           </Button>
         </DialogActions>
       </Dialog>
